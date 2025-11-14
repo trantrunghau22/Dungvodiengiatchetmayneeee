@@ -83,7 +83,7 @@ class GameLogic:
         
         if changed:
             self.spawn_tile()
-            self.game_over = self.is_game_over()
+           self.game_over = self.is_game_over()
         
         # Trả về state (bàn cờ), reward (điểm vừa kiếm), done (kết thúc?)
         return self.board, score_gained, self.game_over
