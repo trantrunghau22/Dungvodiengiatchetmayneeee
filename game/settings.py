@@ -98,5 +98,7 @@ def draw(window, tiles):
 
     pygame.display.update()
 
+if __name__ == "__main__":
+    main(WINDOW)
 
 
