@@ -1,6 +1,7 @@
 import pygame
 from game.settings import WINDOW_WIDTH, WINDOW_HEIGHT, FPS
 from game.scenes.board import BoardScene
+from game.scenes.intro import IntroScreen
 
 class App:
     def __init__(self):
@@ -10,7 +11,7 @@ class App:
         self.clock = pygame.time.Clock()
         self.running = True
 
-        self.active_scene = BoardScene(self.screen)
+        self.active_scene = IntroScreen(self)
 
     def run(self):
         while self.running:
