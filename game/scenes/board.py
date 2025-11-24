@@ -15,7 +15,8 @@ KEY_TO_ACTION = {
 
 class BoardScene:
     def __init__(self, screen):
-        self.screen = screen
+        self.app = app
+        self.screen = app.screen
         self.env = Game2048Env(size=GRID_SIZE)
         self.state = self.env.reset()
 
