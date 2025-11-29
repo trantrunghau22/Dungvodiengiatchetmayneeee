@@ -38,3 +38,20 @@ FPS = 60
 
 TILE_RADIUS = 10
 TILE_GAP = 12
+
+# Constants for Nickname
+NICKNAME_COLOR = (255, 255, 255)
+NICKNAME_FONT_SIZE = 24
+
+# Constants for Replay/Quit Buttons
+BUTTON_WIDTH = 100
+BUTTON_HEIGHT = 40
+REPLAY_BUTTON_X = WINDOW_WIDTH - 220
+QUIT_BUTTON_X = WINDOW_WIDTH - 110
+BUTTON_Y = 100
+BUTTON_BG_COLOR = (180, 180, 180)
+BUTTON_TEXT_COLOR = (0, 0, 0)
+BUTTON_RADIUS = 8 # Tùy chỉnh độ bo góc
+
+# Constants for Top Score (Lưu ý: Bạn sẽ cần một cơ chế để lưu trữ Top Score)
+TOP_SCORE_FILE = "top_score.txt"
