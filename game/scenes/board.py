@@ -78,7 +78,8 @@ class BoardScene:
         self.draw_rounded(self.screen, top_score_rect, SCORE_BG_COLOR)
         top_score_text = self.font_small.render(f"Top: {self.top_score}", True, (255,255,255))
         self.screen.blit(top_score_text, (top_score_rect.x + 16, top_score_rect.y + 14))
-           def render_instructions(self):
+        
+    def render_instructions(self):
         text = "Controls: [Arrows/WASD] Move   [S] Save Game   [R] Replay   [Q] Menu"
         guide_surf = self.font_guide.render(text, True, (119, 110, 101))
         guide_rect = guide_surf.get_rect(center=(WINDOW_WIDTH // 2, 105))
