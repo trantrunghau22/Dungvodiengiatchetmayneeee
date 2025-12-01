@@ -52,5 +52,4 @@ BUTTON_BG_COLOR = (180, 180, 180)
 BUTTON_TEXT_COLOR = (0, 0, 0)
 BUTTON_RADIUS = 8
 
-# Constants for Top Score
 TOP_SCORE_FILE = "top_score.txt"
