@@ -85,11 +85,8 @@ class BoardScene:
         self.screen.blit(top_score_text, (top_score_rect.x + 16, top_score_rect.y + 14))
 
     def render_instructions(self):
-        # Nội dung hướng dẫn
-        text = "Controls: [Arrows/WASD] Move   [S] Save Game   [R] Replay   [Q] Menu"
-        # Tạo surface văn bản
+        text = "Controls:    [Arrows/WASD] Move       [S] Save Game       [R] Replay       [Q] Menu"
         guide_surf = self.font_guide.render(text, True, (119, 110, 101)) 
-        # Căn giữa theo chiều ngang, đặt ở vị trí y = 105
         guide_rect = guide_surf.get_rect(center=(WINDOW_WIDTH // 2, 105))
         # Vẽ lên màn hình
         self.screen.blit(guide_surf, guide_rect)
@@ -135,14 +132,13 @@ class BoardScene:
                     self.app.active_scene = IntroScreen(self.app)
             return
 
-        # Xử lý chơi game
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
                 self.reset_game()
             
-            # --- TÍNH NĂNG: Bấm S để lưu game ---
+            # S to save
             elif event.key == pygame.K_s:
-                filename = f"{self.player_nickname}_save"
+                filename = f"{self.player_nickname}"
                 try:
                     saved_path = self.env.save_game(filename)
                     print(f"Game saved successfully to: {saved_path}")
