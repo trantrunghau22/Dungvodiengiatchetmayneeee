@@ -5,7 +5,11 @@ from game.scenes.board import BoardScene
 import os
 
 pygame.init()
-
+class BoardScene:
+    def __init__(self, env, app):
+        self.env = env
+        self.app = app
+        self.username = app.username
 class IntroScreen:
     def __init__(self, app):
         self.app = app
