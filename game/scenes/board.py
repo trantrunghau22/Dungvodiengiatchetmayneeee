@@ -23,7 +23,7 @@ class BoardScene:
         self.screen = app.window 
         self.env = env           
         
-        # Lấy trạng thái ban đầu
+        # get state
         self.state = self.env.get_state() 
         
         self.game_over = False
