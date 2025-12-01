@@ -10,7 +10,7 @@ class IntroScreen:
         self.app = app
         self.window = app.window
         
-        # --- Font setup ---
+        # set up font
         try:
             self.font_title = pygame.font.SysFont("comicsansms", 140, bold=True)
             self.font_small = pygame.font.SysFont("comicsansms", 32, bold=True)
@@ -22,12 +22,12 @@ class IntroScreen:
             self.font_input = pygame.font.SysFont("arial", 28)
             self.font_list  = pygame.font.SysFont("arial", 24)
 
-        # --- Main Buttons ---
+        # cac nut chinh
         self.button_start = pygame.Rect(240, 420, 300, 60)
         self.button_ai = pygame.Rect(240, 500, 300, 60)
         self.button_load = pygame.Rect(240, 580, 300, 60)
 
-        # --- Username input ---
+        # nhap nickname
         self.username = getattr(self.app, 'username', "")
         self.input_active = False
         self.input_box = pygame.Rect(200, 320, 400, 50)
@@ -35,27 +35,27 @@ class IntroScreen:
         self.color_inactive = (187, 173, 160)
         self.input_color = self.color_inactive
 
-        # --- Load Game Modal (Cửa sổ chọn file) ---
+        # load game
         self.show_load_list = False  # Trạng thái hiển thị danh sách
         self.saved_files = []        # Danh sách file tìm được
         self.file_rects = []         # Vùng bấm của từng file (để chọn)
         self.del_file_rects = []     # Vùng bấm xóa file (nút X)
         
-        # Khung cửa sổ danh sách
+        # cac file load game
         self.list_bg_rect = pygame.Rect(100, 150, 600, 500)
-        self.btn_close_list = pygame.Rect(550, 160, 140, 40) # Nút đóng danh sách
+        self.btn_close_list = pygame.Rect(550, 160, 140, 40) # close file
 
     def _scan_saved_files(self):
         """Quét thư mục để tìm file .json và sắp xếp theo thời gian mới nhất"""
         files = []
         try:
-            # Lấy tất cả file trong thư mục hiện tại
+            # lay file
             all_files = os.listdir('.')
             for f in all_files:
                 if f.endswith('.json'):
                     files.append(f)
             
-            # Sắp xếp theo thời gian sửa đổi (mới nhất lên đầu)
+            # sap xep thoi gian cua file luu gan nhat len dau
             files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
         except Exception as e:
             print("Error scanning files:", e)
