@@ -34,7 +34,7 @@ class BoardScene:
         self.font_title = pygame.font.SysFont(FONT_NAME, 38, bold=True)
         self.font_small = pygame.font.SysFont(FONT_NAME, 22)
         self.font_button = pygame.font.SysFont(FONT_NAME, 20, bold=True)
-        self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) # Font cho dòng hướng dẫn
+        self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) # font cua hdsd phim
         
         # nut 
         self.replay_rect = pygame.Rect(WINDOW_WIDTH//2 - 120, WINDOW_HEIGHT//2 + 50, 100, 50)
