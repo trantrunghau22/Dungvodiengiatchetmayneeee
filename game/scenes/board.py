@@ -100,10 +100,8 @@ class BoardScene:
                     text = font.render(str(val), True, text_color)
                     self.screen.blit(text, text.get_rect(center=rect.center))
 
-    def handle_event(self, event):
-
+   def handle_event(self, event):
         from game.scenes.intro import IntroScreen 
-
         if self.game_over:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
@@ -112,17 +110,26 @@ class BoardScene:
                     self.app.active_scene = IntroScreen(self.app)
             
             if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = event.pos
-                if self.replay_rect.collidepoint(mouse_pos):
+                if self.replay_rect.collidepoint(event.pos):
                     self.reset_game()
-                elif self.quit_rect.collidepoint(mouse_pos):
+                elif self.quit_rect.collidepoint(event.pos):
                     self.app.active_scene = IntroScreen(self.app)
             return
-
-
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
                 self.reset_game()
+    
+            elif event.key == pygame.K_s:
+                filename = f"{self.player_nickname}_save"
+                try:
+                    saved_path = self.env.save_game(filename)
+                    print(f"Game saved successfully to: {saved_path}")
+                except Exception as e:
+                    print(f"Error saving game: {e}")
+
+            elif event.key == pygame.K_q:
+                self.app.active_scene = IntroScreen(self.app)
+
             elif event.key in KEY_TO_ACTION:
                 action = KEY_TO_ACTION[event.key]
                 s, r, d, info = self.env.step(action)
@@ -130,7 +137,6 @@ class BoardScene:
                 if d: 
                     self.game_over = True
                     self._save_top_score()
-
     def reset_game(self):
         self.state = self.env.reset()
         self.game_over = False
