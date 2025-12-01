@@ -12,7 +12,8 @@ class Game2048Env:
         self.size = size
         self.board = np.zeros((size, size), dtype=int)
         self.score = 0
-
+        self.game_over = False 
+        self.total_time = 0
         if seed is not None:
             np.random.seed(seed)
             random.seed(seed)
@@ -22,6 +23,8 @@ class Game2048Env:
         self.score = 0
         self._spawn_tile()
         self._spawn_tile()
+        self.game_over = False 
+        self.total_time = 0
         return self.get_state()
 
     def get_state(self):
@@ -69,6 +72,8 @@ class Game2048Env:
 
         done = self.is_done()
         info = {"moved": moved}
+        if done: 
+        self.game_over = True
         return self.get_state(), reward, done, info
 
     #core logic của game
