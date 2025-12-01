@@ -20,7 +20,7 @@ class BoardScene:
         self.app = app
         self.screen = app.window 
         self.env = env           
-        self.state = self.env.get_board() 
+        self.state = self.env.get_state() 
         
         self.game_over = False
         self.player_nickname = app.username
