@@ -38,7 +38,8 @@ class IntroScreen:
         # --- Load Game Modal (Cửa sổ chọn file) ---
         self.show_load_list = False  # Trạng thái hiển thị danh sách
         self.saved_files = []        # Danh sách file tìm được
-        self.file_rects = []         # Vùng bấm của từng file
+        self.file_rects = []         # Vùng bấm của từng file (để chọn)
+        self.del_file_rects = []     # Vùng bấm xóa file (nút X)
         
         # Khung cửa sổ danh sách
         self.list_bg_rect = pygame.Rect(100, 150, 600, 500)
@@ -67,12 +68,25 @@ class IntroScreen:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 
-                # Check nút Đóng (Close)
+                # A. Check nút Đóng (Close)
                 if self.btn_close_list.collidepoint(mouse_pos):
                     self.show_load_list = False
                     return
 
-                # Check click vào từng file
+                # B. Check nút Xóa (Delete - Nút X màu đỏ)
+                # Lưu ý: Check xóa trước khi check chọn file
+                for i, del_rect in enumerate(self.del_file_rects):
+                    if del_rect.collidepoint(mouse_pos):
+                        file_to_delete = self.saved_files[i]
+                        try:
+                            os.remove(file_to_delete)
+                            print(f"Deleted file: {file_to_delete}")
+                            self._scan_saved_files() # Quét lại danh sách ngay lập tức
+                        except Exception as e:
+                            print(f"Error deleting file: {e}")
+                        return 
+
+                # C. Check click vào từng file (Để Load Game)
                 for i, rect in enumerate(self.file_rects):
                     if rect.collidepoint(mouse_pos):
                         selected_file = self.saved_files[i]
@@ -200,34 +214,52 @@ class IntroScreen:
         self.window.blit(close_txt, close_txt.get_rect(center=self.btn_close_list.center))
 
         # 5. Vẽ danh sách các file
-        self.file_rects = [] # Reset danh sách vùng bấm
+        self.file_rects = []     # Reset danh sách vùng chọn
+        self.del_file_rects = [] # Reset danh sách nút xóa
+        
         start_y = self.list_bg_rect.y + 80
         
         if not self.saved_files:
             empty_txt = self.font_list.render("No saved files found (.json)", True, (150, 150, 150))
             self.window.blit(empty_txt, (self.list_bg_rect.x + 40, start_y))
         else:
-            # Chỉ hiện tối đa 8 file mới nhất để không bị tràn màn hình
+            # Chỉ hiện tối đa 8 file mới nhất
             for i, filename in enumerate(self.saved_files[:8]):
-                # Tạo vùng bấm cho từng dòng
+                # -- Tạo vùng hiển thị dòng --
                 item_rect = pygame.Rect(self.list_bg_rect.x + 20, start_y + i*50, 560, 40)
                 self.file_rects.append(item_rect)
 
-                # Hiệu ứng hover chuột
-                if item_rect.collidepoint(mouse_pos):
+                # Hiệu ứng hover chuột lên dòng
+                is_hovered = item_rect.collidepoint(mouse_pos)
+                if is_hovered:
                     pygame.draw.rect(self.window, (238, 228, 218), item_rect, border_radius=5)
                     text_color = (243, 178, 122)
                 else:
                     text_color = (119, 110, 101)
 
-                # Vẽ tên file
-                # Cắt bớt tên nếu quá dài
-                display_name = filename if len(filename) < 40 else filename[:37] + "..."
+                # -- VẼ TÊN FILE --
+                display_name = filename if len(filename) < 35 else filename[:32] + "..."
                 txt_surf = self.font_list.render(f"{i+1}. {display_name}", True, text_color)
-                
-                # Canh giữa theo chiều dọc của dòng
                 txt_rect = txt_surf.get_rect(midleft=(item_rect.x + 10, item_rect.centery))
                 self.window.blit(txt_surf, txt_rect)
+                
+                # -- VẼ NÚT XÓA (X) Ở CUỐI DÒNG --
+                # Vị trí nút X: Bên phải cùng của dòng
+                del_btn_rect = pygame.Rect(item_rect.right - 40, item_rect.y + 5, 30, 30)
+                self.del_file_rects.append(del_btn_rect)
+                
+                # Hover nút xóa
+                if del_btn_rect.collidepoint(mouse_pos):
+                    del_color = (255, 100, 100) # Đỏ sáng khi hover
+                else:
+                    del_color = (200, 200, 200) # Xám nhạt mặc định
+                
+                pygame.draw.rect(self.window, del_color, del_btn_rect, border_radius=5)
+                
+                # Chữ X
+                x_surf = self.font_list.render("X", True, (255, 255, 255))
+                x_rect = x_surf.get_rect(center=del_btn_rect.center)
+                self.window.blit(x_surf, x_rect)
 
     def _draw_button(self, rect, text):
         mouse = pygame.mouse.get_pos()
