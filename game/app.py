@@ -1,25 +1,24 @@
 import pygame
 from game.settings import WINDOW_WIDTH, WINDOW_HEIGHT, FPS
-# Import màn hình Intro để khởi động
+# Import IntroScreen
 from game.scenes.intro import IntroScreen
 
 class App:
     def __init__(self):
         pygame.init()
-        # Khởi tạo cửa sổ game
+        # Khởi tạo màn hình
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-        self.window = self.screen # Tạo alias (tên gọi khác) để khớp với các file khác
+        self.window = self.screen # Alias (tên khác) để các file khác gọi không bị lỗi
         
         pygame.display.set_caption("2048 Project")
         self.clock = pygame.time.Clock()
         self.running = True
 
         # --- BIẾN TOÀN CỤC (GLOBAL STATE) ---
-        # Lưu trữ thông tin dùng chung cho toàn bộ game
         self.username = ""
         self.ai_mode = False
 
-        # Bắt đầu game bằng màn hình Intro
+        # Khởi động vào màn hình Intro đầu tiên
         self.active_scene = IntroScreen(self)
 
     def run(self):
@@ -31,10 +30,9 @@ class App:
                 if event.type == pygame.QUIT:
                     self.running = False
                 else:
-                    # Chuyển sự kiện cho màn hình đang hiển thị xử lý
                     self.active_scene.handle_event(event)
 
-            # Cập nhật & Vẽ màn hình (Update & Render)
+            # Cập nhật & Vẽ (Update & Render)
             self.active_scene.update()
             self.active_scene.render()
             
