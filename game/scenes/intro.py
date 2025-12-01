@@ -46,7 +46,7 @@ class IntroScreen:
         self.btn_close_list = pygame.Rect(550, 160, 140, 40) # close file
 
     def _scan_saved_files(self):
-        """Quét thư mục để tìm file .json và sắp xếp theo thời gian mới nhất"""
+        # tim cac file da luu va xep theo thu tu luu gan nhat
         files = []
         try:
             # lay file
@@ -63,40 +63,38 @@ class IntroScreen:
         self.saved_files = files
 
     def handle_event(self, event):
-        # --- 1. Xử lý khi đang mở danh sách Load Game ---
+        # Mo danh sach luu
         if self.show_load_list:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 
-                # A. Check nút Đóng (Close)
+                # check close button (X)
                 if self.btn_close_list.collidepoint(mouse_pos):
                     self.show_load_list = False
                     return
 
-                # B. Check nút Xóa (Delete - Nút X màu đỏ)
-                # Lưu ý: Check xóa trước khi check chọn file
+                # check Delete button
                 for i, del_rect in enumerate(self.del_file_rects):
                     if del_rect.collidepoint(mouse_pos):
                         file_to_delete = self.saved_files[i]
                         try:
                             os.remove(file_to_delete)
                             print(f"Deleted file: {file_to_delete}")
-                            self._scan_saved_files() # Quét lại danh sách ngay lập tức
+                            self._scan_saved_files() # rescan cac file
                         except Exception as e:
                             print(f"Error deleting file: {e}")
                         return 
 
-                # C. Check click vào từng file (Để Load Game)
+                # check click
                 for i, rect in enumerate(self.file_rects):
                     if rect.collidepoint(mouse_pos):
                         selected_file = self.saved_files[i]
                         self._load_selected_file(selected_file)
                         return
-            return # Nếu đang mở list thì chặn các sự kiện bên dưới
-
-        # --- 2. Xử lý màn hình Intro bình thường ---
+            return
+        # intro
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # Nhập Username
+            # username
             if self.input_box.collidepoint(event.pos):
                 self.input_active = True
                 self.input_color = self.color_active
@@ -112,12 +110,12 @@ class IntroScreen:
             if self.button_ai.collidepoint(event.pos):
                 self._start_game(ai_mode=True)
 
-            # LOAD GAME BUTTON -> Mở danh sách
+            # LOAD GAME BUTTON
             if self.button_load.collidepoint(event.pos):
-                self._scan_saved_files() # Quét file mới nhất
+                self._scan_saved_files() # scan file
                 self.show_load_list = True
 
-        # Input bàn phím (Chỉ cho Username)
+        # input username from keyboard 
         if event.type == pygame.KEYDOWN:
             if self.input_active:
                 if event.key == pygame.K_RETURN:
@@ -131,19 +129,19 @@ class IntroScreen:
     def _start_game(self, ai_mode=False):
         if self.username.strip() == "":
             print("Username required!")
-            # Có thể thêm hiệu ứng rung lắc hoặc đổi màu ô nhập để báo lỗi
+    
             return
             
         self.app.username = self.username
         self.app.ai_mode = ai_mode
         
-        # Tạo game mới
+        # new game
         new_env = Game2048Env(size=GRID_SIZE)
         new_env.reset()
         self.app.active_scene = BoardScene(new_env, self.app)
 
     def _load_selected_file(self, filename):
-        # Load file đã chọn
+        # load file
         print(f"Loading file: {filename}")
         
         if not os.path.exists(filename):
@@ -158,7 +156,7 @@ class IntroScreen:
             print("Error loading game:", e)
             return
 
-        # Nếu username trống thì lấy tên từ tên file (vd: Hau_save.json -> Hau)
+        # neu user name trong thi lay ten tu file (vd: Hau_save.json -> Hau)
         if self.username.strip() == "":
             base_name = filename.replace("_save.json", "").replace(".json", "")
             self.app.username = base_name
@@ -171,11 +169,11 @@ class IntroScreen:
     def render(self):
         self.window.fill((250, 248, 239))
 
-        # Title
+        # title
         title = self.font_title.render("2048", True, (243, 178, 122))
         self.window.blit(title, (190, 150))
 
-        # Username input
+        # username input
         label = self.font_small.render("Enter username:", True, (119, 110, 101))
         self.window.blit(label, (200, 280))
 
@@ -183,53 +181,53 @@ class IntroScreen:
         text_surface = self.font_input.render(self.username, True, (0, 0, 0))
         self.window.blit(text_surface, (self.input_box.x+10, self.input_box.y+10))
 
-        # Buttons chính
+        # button chinh
         self._draw_button(self.button_start, "START")
         self._draw_button(self.button_ai, "AI MODE")
         self._draw_button(self.button_load, "LOAD GAME")
 
-        # --- VẼ DANH SÁCH FILE NẾU ĐANG BẬT ---
+        # danh sach cac file
         if self.show_load_list:
             self._render_load_list()
 
     def _render_load_list(self):
-        # 1. Vẽ lớp phủ mờ (overlay)
-        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        # ve lop phu
+        pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         self.window.blit(overlay, (0, 0))
 
-        # 2. Vẽ khung danh sách
+        # ve khung danh sach
         pygame.draw.rect(self.window, (250, 248, 239), self.list_bg_rect, border_radius=15)
         pygame.draw.rect(self.window, (187, 173, 160), self.list_bg_rect, width=4, border_radius=15)
 
-        # 3. Tiêu đề danh sách
+        # tieu de
         title_surf = self.font_small.render("Select Saved Game", True, (119, 110, 101))
         self.window.blit(title_surf, (self.list_bg_rect.x + 20, self.list_bg_rect.y + 20))
 
-        # 4. Nút Đóng (Close)
+        # close button
         mouse_pos = pygame.mouse.get_pos()
         close_color = (243, 178, 122) if self.btn_close_list.collidepoint(mouse_pos) else (187, 173, 160)
         pygame.draw.rect(self.window, close_color, self.btn_close_list, border_radius=8)
         close_txt = self.font_input.render("Close", True, (255, 255, 255))
         self.window.blit(close_txt, close_txt.get_rect(center=self.btn_close_list.center))
 
-        # 5. Vẽ danh sách các file
-        self.file_rects = []     # Reset danh sách vùng chọn
-        self.del_file_rects = [] # Reset danh sách nút xóa
-        
+        # danh sach cac file
+        self.file_rects = []   
+        self.del_file_rects = [] 
+       
         start_y = self.list_bg_rect.y + 80
         
         if not self.saved_files:
             empty_txt = self.font_list.render("No saved files found (.json)", True, (150, 150, 150))
             self.window.blit(empty_txt, (self.list_bg_rect.x + 40, start_y))
         else:
-            # Chỉ hiện tối đa 8 file mới nhất
+           
             for i, filename in enumerate(self.saved_files[:8]):
-                # -- Tạo vùng hiển thị dòng --
+               
                 item_rect = pygame.Rect(self.list_bg_rect.x + 20, start_y + i*50, 560, 40)
                 self.file_rects.append(item_rect)
 
-                # Hiệu ứng hover chuột lên dòng
+               
                 is_hovered = item_rect.collidepoint(mouse_pos)
                 if is_hovered:
                     pygame.draw.rect(self.window, (238, 228, 218), item_rect, border_radius=5)
@@ -237,33 +235,33 @@ class IntroScreen:
                 else:
                     text_color = (119, 110, 101)
 
-                # -- VẼ TÊN FILE --
+                # ten file
                 display_name = filename if len(filename) < 35 else filename[:32] + "..."
                 txt_surf = self.font_list.render(f"{i+1}. {display_name}", True, text_color)
                 txt_rect = txt_surf.get_rect(midleft=(item_rect.x + 10, item_rect.centery))
                 self.window.blit(txt_surf, txt_rect)
                 
-                # -- VẼ NÚT XÓA (X) Ở CUỐI DÒNG --
-                # Vị trí nút X: Bên phải cùng của dòng
+                # ve nut xoa
+               
                 del_btn_rect = pygame.Rect(item_rect.right - 40, item_rect.y + 5, 30, 30)
                 self.del_file_rects.append(del_btn_rect)
                 
-                # Hover nút xóa
+               
                 if del_btn_rect.collidepoint(mouse_pos):
-                    del_color = (255, 100, 100) # Đỏ sáng khi hover
+                    del_color = (255, 100, 100) #khi chon co mau do
                 else:
-                    del_color = (200, 200, 200) # Xám nhạt mặc định
+                    del_color = (200, 200, 200) #mac dinh mau xam
                 
                 pygame.draw.rect(self.window, del_color, del_btn_rect, border_radius=5)
                 
-                # Chữ X
+               
                 x_surf = self.font_list.render("X", True, (255, 255, 255))
                 x_rect = x_surf.get_rect(center=del_btn_rect.center)
                 self.window.blit(x_surf, x_rect)
 
     def _draw_button(self, rect, text):
         mouse = pygame.mouse.get_pos()
-        # Đổi màu khi hover
+      
         color = (243, 178, 122) if rect.collidepoint(mouse) else (246, 150, 101)
         pygame.draw.rect(self.window, color, rect, border_radius=12)
         text_surf = self.font_small.render(text, True, (250, 248, 239))
