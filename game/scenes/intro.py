@@ -15,7 +15,7 @@ class IntroScreen:
             self.font_title = pygame.font.SysFont("comicsansms", 140, bold=True)
             self.font_small = pygame.font.SysFont("comicsansms", 32, bold=True)
             self.font_input = pygame.font.SysFont("comicsansms", 28)
-            self.font_list  = pygame.font.SysFont("arial", 24) # Font cho danh sách file
+            self.font_list  = pygame.font.SysFont("arial", 24) # font cua cac file
         except:
             self.font_title = pygame.font.SysFont("arial", 100, bold=True)
             self.font_small = pygame.font.SysFont("arial", 32, bold=True)
@@ -36,10 +36,10 @@ class IntroScreen:
         self.input_color = self.color_inactive
 
         # load game
-        self.show_load_list = False  # Trạng thái hiển thị danh sách
-        self.saved_files = []        # Danh sách file tìm được
-        self.file_rects = []         # Vùng bấm của từng file (để chọn)
-        self.del_file_rects = []     # Vùng bấm xóa file (nút X)
+        self.show_load_list = False  # trang thai hien thi danh sach
+        self.saved_files = []        # cac file da luu
+        self.file_rects = []         # khung giao tunh tung file
+        self.del_file_rects = []     # xoa file (X)
         
         # cac file load game
         self.list_bg_rect = pygame.Rect(100, 150, 600, 500)
