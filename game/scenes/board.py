@@ -29,6 +29,7 @@ class BoardScene:
         self.font_title = pygame.font.SysFont(FONT_NAME, 38, bold=True)
         self.font_small = pygame.font.SysFont(FONT_NAME, 22)
         self.font_button = pygame.font.SysFont(FONT_NAME, 20, bold=True)
+        self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) #Guide font
         
         self.replay_rect = pygame.Rect(WINDOW_WIDTH//2 - 120, WINDOW_HEIGHT//2 + 50, 100, 50)
         self.quit_rect = pygame.Rect(WINDOW_WIDTH//2 + 20, WINDOW_HEIGHT//2 + 50, 100, 50)
@@ -77,6 +78,13 @@ class BoardScene:
         self.draw_rounded(self.screen, top_score_rect, SCORE_BG_COLOR)
         top_score_text = self.font_small.render(f"Top: {self.top_score}", True, (255,255,255))
         self.screen.blit(top_score_text, (top_score_rect.x + 16, top_score_rect.y + 14))
+           def render_instructions(self):
+        text = "Controls: [Arrows/WASD] Move   [S] Save Game   [R] Replay   [Q] Menu"
+        guide_surf = self.font_guide.render(text, True, (119, 110, 101))
+        guide_rect = guide_surf.get_rect(center=(WINDOW_WIDTH // 2, 105))
+
+        self.screen.blit(guide_surf, guide_rect)
+
 
     def render_board(self):
         self.draw_rounded(self.screen, self.board_rect, BOARD_BG_COLOR, radius=12)
@@ -150,6 +158,7 @@ class BoardScene:
     def render(self):
         self.screen.fill(BACKGROUND_COLOR)
         self.render_header()
+        self.render_instructions()
         self.render_board()
         self.render_game_over()
 
@@ -172,3 +181,4 @@ class BoardScene:
         self.draw_rounded(self.screen, self.quit_rect, (243, 178, 122))
         quit_label = self.font_button.render("MENU", True, (255,255,255))
         self.screen.blit(quit_label, quit_label.get_rect(center=self.quit_rect.center))
+ 
