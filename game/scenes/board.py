@@ -3,7 +3,7 @@ import os
 from game.settings import *
 from game.core.env_2048 import UP, DOWN, LEFT, RIGHT
 
-# --- Cấu hình điều khiển ---
+# dieu khien
 KEY_TO_ACTION = {
     pygame.K_UP: UP,
     pygame.K_w: UP,
@@ -30,23 +30,23 @@ class BoardScene:
         self.player_nickname = getattr(app, 'username', 'Player')
         self.top_score = self._load_top_score()
         
-        # --- Font setup ---
+        # set up font chu
         self.font_title = pygame.font.SysFont(FONT_NAME, 38, bold=True)
         self.font_small = pygame.font.SysFont(FONT_NAME, 22)
         self.font_button = pygame.font.SysFont(FONT_NAME, 20, bold=True)
         self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) # Font cho dòng hướng dẫn
         
-        # --- Buttons Rect ---
+        # nut 
         self.replay_rect = pygame.Rect(WINDOW_WIDTH//2 - 120, WINDOW_HEIGHT//2 + 50, 100, 50)
         self.quit_rect = pygame.Rect(WINDOW_WIDTH//2 + 20, WINDOW_HEIGHT//2 + 50, 100, 50)
         
-        # --- Tính toán kích thước bàn cờ ---
+        # board size
         total_gap = (GRID_SIZE + 1) * TILE_GAP
         self.tile_size = (BOARD_SIZE - total_gap) // GRID_SIZE
         self.board_rect = pygame.Rect(BOARD_MARGIN, BOARD_TOP, BOARD_SIZE, BOARD_SIZE)
 
     def get_current_max_tile_score(self):
-        # Lấy điểm số hiện tại từ môi trường
+        # get score
         return self.env.score 
     
     def _load_top_score(self):
@@ -66,7 +66,7 @@ class BoardScene:
     def draw_rounded(self, surf, rect, color, radius=TILE_RADIUS):
         pygame.draw.rect(surf, color, rect, border_radius=radius)
 
-    # --- Render Header (Điểm số, Tên người chơi) ---
+    # name + score
     def render_header(self):
         current_score = self.get_current_max_tile_score() 
         
@@ -88,17 +88,17 @@ class BoardScene:
         top_score_text = self.font_small.render(f"Top: {self.top_score}", True, (255,255,255))
         self.screen.blit(top_score_text, (top_score_rect.x + 16, top_score_rect.y + 14))
 
-    # --- Render Dòng Hướng Dẫn ---
+    # huong dan phim bam
     def render_instructions(self):
         text = "Controls:   [Arrows/WASD] Move      [S] Save Game      [R] Replay      [Q] Menu"
         guide_surf = self.font_guide.render(text, True, (119, 110, 101)) 
         guide_rect = guide_surf.get_rect(center=(WINDOW_WIDTH // 2, 105))
         self.screen.blit(guide_surf, guide_rect)
 
-    # --- Render Bàn Cờ ---
+    # ve ban co
     def render_board(self):
         self.draw_rounded(self.screen, self.board_rect, BOARD_BG_COLOR, radius=12)
-        # Cập nhật state mới nhất để vẽ
+        # update state
         self.state = self.env.board 
         
         for r in range(GRID_SIZE):
@@ -119,12 +119,12 @@ class BoardScene:
                     text = font.render(str(val), True, text_color)
                     self.screen.blit(text, text.get_rect(center=rect.center))
 
-    # --- Xử lý sự kiện (Phím bấm, Chuột) ---
+    # xu li chuot + phim
     def handle_event(self, event):
-        # Import cục bộ để tránh lỗi circular import
+      
         from game.scenes.intro import IntroScreen 
 
-        # 1. Xử lý khi Game Over
+        # ket thuc game
         if self.game_over:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
@@ -140,7 +140,7 @@ class BoardScene:
                     self.app.active_scene = IntroScreen(self.app)
             return
 
-        # 2. Xử lý khi đang chơi
+        # choi game
         if event.type == pygame.KEYDOWN:
             # R: Replay
             if event.key == pygame.K_r:
@@ -198,12 +198,12 @@ class BoardScene:
         go_text = self.font_title.render("GAME OVER", True, (255, 0, 0))
         self.screen.blit(go_text, go_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50)))
         
-        # Replay Button
+        # Nut choi lai (R)
         self.draw_rounded(self.screen, self.replay_rect, (243, 178, 122))
         replay_label = self.font_button.render("REPLAY (R)", True, (255,255,255))
         self.screen.blit(replay_label, replay_label.get_rect(center=self.replay_rect.center))
         
-        # Menu Button
+        # Quay lai menu (Q)
         self.draw_rounded(self.screen, self.quit_rect, (243, 178, 122))
         quit_label = self.font_button.render("MENU (Q)", True, (255,255,255))
         self.screen.blit(quit_label, quit_label.get_rect(center=self.quit_rect.center))
