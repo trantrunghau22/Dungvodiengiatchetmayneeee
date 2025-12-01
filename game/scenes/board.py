@@ -1,4 +1,5 @@
 import pygame
+import os
 from game.settings import *
 from game.core.env_2048 import UP, DOWN, LEFT, RIGHT
 
@@ -13,24 +14,28 @@ KEY_TO_ACTION = {
     pygame.K_d: RIGHT,
 }
 
-TOP_SCORE_FILE = "top_score.txt" 
+TOP_SCORE_FILE = "top_score.txt"
 
 class BoardScene:
     def __init__(self, env, app):
         self.app = app
         self.screen = app.window 
         self.env = env           
+        
+        # SỬA LỖI: Dùng get_state() thay vì get_board()
         self.state = self.env.get_state() 
         
         self.game_over = False
         self.player_nickname = app.username
         self.top_score = self._load_top_score()
         
+        # Font setup
         self.font_title = pygame.font.SysFont(FONT_NAME, 38, bold=True)
         self.font_small = pygame.font.SysFont(FONT_NAME, 22)
         self.font_button = pygame.font.SysFont(FONT_NAME, 20, bold=True)
-        self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) #Guide font
+        self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) # Font hướng dẫn
         
+        # Buttons Rect
         self.replay_rect = pygame.Rect(WINDOW_WIDTH//2 - 120, WINDOW_HEIGHT//2 + 50, 100, 50)
         self.quit_rect = pygame.Rect(WINDOW_WIDTH//2 + 20, WINDOW_HEIGHT//2 + 50, 100, 50)
         
@@ -78,14 +83,16 @@ class BoardScene:
         self.draw_rounded(self.screen, top_score_rect, SCORE_BG_COLOR)
         top_score_text = self.font_small.render(f"Top: {self.top_score}", True, (255,255,255))
         self.screen.blit(top_score_text, (top_score_rect.x + 16, top_score_rect.y + 14))
-        
+
     def render_instructions(self):
+        # Nội dung hướng dẫn
         text = "Controls: [Arrows/WASD] Move   [S] Save Game   [R] Replay   [Q] Menu"
-        guide_surf = self.font_guide.render(text, True, (119, 110, 101))
+        # Tạo surface văn bản
+        guide_surf = self.font_guide.render(text, True, (119, 110, 101)) 
+        # Căn giữa theo chiều ngang, đặt ở vị trí y = 105
         guide_rect = guide_surf.get_rect(center=(WINDOW_WIDTH // 2, 105))
-
+        # Vẽ lên màn hình
         self.screen.blit(guide_surf, guide_rect)
-
 
     def render_board(self):
         self.draw_rounded(self.screen, self.board_rect, BOARD_BG_COLOR, radius=12)
@@ -109,8 +116,10 @@ class BoardScene:
                     text = font.render(str(val), True, text_color)
                     self.screen.blit(text, text.get_rect(center=rect.center))
 
-   def handle_event(self, event):
+    def handle_event(self, event):
+        # Import cục bộ để tránh lỗi circular import
         from game.scenes.intro import IntroScreen 
+
         if self.game_over:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
@@ -119,15 +128,19 @@ class BoardScene:
                     self.app.active_scene = IntroScreen(self.app)
             
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if self.replay_rect.collidepoint(event.pos):
+                mouse_pos = event.pos
+                if self.replay_rect.collidepoint(mouse_pos):
                     self.reset_game()
-                elif self.quit_rect.collidepoint(event.pos):
+                elif self.quit_rect.collidepoint(mouse_pos):
                     self.app.active_scene = IntroScreen(self.app)
             return
+
+        # Xử lý chơi game
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
                 self.reset_game()
-    
+            
+            # --- TÍNH NĂNG: Bấm S để lưu game ---
             elif event.key == pygame.K_s:
                 filename = f"{self.player_nickname}_save"
                 try:
@@ -146,6 +159,7 @@ class BoardScene:
                 if d: 
                     self.game_over = True
                     self._save_top_score()
+
     def reset_game(self):
         self.state = self.env.reset()
         self.game_over = False
@@ -153,13 +167,15 @@ class BoardScene:
 
     def update(self):
         if self.app.ai_mode and not self.game_over:
-            # PUT LOGIC AI
             pass
 
     def render(self):
         self.screen.fill(BACKGROUND_COLOR)
         self.render_header()
+        
+        # Vẽ dòng hướng dẫn
         self.render_instructions()
+        
         self.render_board()
         self.render_game_over()
 
@@ -182,4 +198,3 @@ class BoardScene:
         self.draw_rounded(self.screen, self.quit_rect, (243, 178, 122))
         quit_label = self.font_button.render("MENU", True, (255,255,255))
         self.screen.blit(quit_label, quit_label.get_rect(center=self.quit_rect.center))
- 
