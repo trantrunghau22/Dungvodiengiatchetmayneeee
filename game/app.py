@@ -2,7 +2,9 @@ import pygame
 from game.settings import WINDOW_WIDTH, WINDOW_HEIGHT, FPS
 from game.scenes.board import BoardScene
 from game.scenes.intro import IntroScreen
-
+self.username = None
+self.ai_mode = False
+self.active_scene = IntroScreen(self)
 class App:
     def __init__(self):
         pygame.init()
