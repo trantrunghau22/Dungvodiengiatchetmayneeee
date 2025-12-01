@@ -148,7 +148,7 @@ class BoardScene:
             
             # S: Save Game
             elif event.key == pygame.K_s:
-                # Tên file: Player_save.json
+                # ten file: name_save.json
                 filename = f"{self.player_nickname}_save"
                 try:
                     saved_path = self.env.save_game(filename)
@@ -160,7 +160,7 @@ class BoardScene:
             elif event.key == pygame.K_q:
                 self.app.active_scene = IntroScreen(self.app)
 
-            # Phím di chuyển
+            # Nut di chuyen
             elif event.key in KEY_TO_ACTION:
                 action = KEY_TO_ACTION[event.key]
                 s, r, d, info = self.env.step(action)
