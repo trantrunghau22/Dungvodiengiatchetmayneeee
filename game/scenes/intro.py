@@ -86,17 +86,29 @@ class IntroScreen:
                 self.load_color = self.color_active
                 print("Load mode enabled: please type filename")
 
-        # Input by keyboard
+       # Input by keyboard
         if event.type == pygame.KEYDOWN:
             # Username 
             if self.input_active:
-                if event.key == pygame.K_BACKSPACE:
+                if event.key == pygame.K_RETURN: # <--- XỬ LÝ KHI NHẤN ENTER
+
+                    if self.username.strip() != "":
+                        self.app.username = self.username
+                        self.app.ai_mode = False
+                        new_env = Game2048Env(size=GRID_SIZE)
+                        new_env.reset()
+                        self.app.active_scene = BoardScene(new_env, self.app)
+                    else:
+                        print("Username required!")
+                
+                elif event.key == pygame.K_BACKSPACE:
                     self.username = self.username[:-1]
+                
                 else:
+    
                     if len(self.username) < 12:
                         self.username += event.unicode
 
-            # Load filename
             if self.load_active and self.load_mode:
                 if event.key == pygame.K_BACKSPACE:
                     self.load_filename = self.load_filename[:-1]
@@ -170,3 +182,4 @@ class IntroScreen:
 
     def update(self):
         pass
+
