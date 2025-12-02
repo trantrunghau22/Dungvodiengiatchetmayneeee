@@ -203,7 +203,7 @@ class BoardScene:
             # S: Save Game
             elif event.key == pygame.K_s:
                 # Lưu game, sử dụng nickname để đặt tên file
-                filename = f"{self.player_nickname}_save"
+                filename = f"{self.player_nickname}"
                 try:
                     # Gán thời gian đã chơi vào env trước khi lưu
                     self.env.total_time = time.time() - self.start_time
