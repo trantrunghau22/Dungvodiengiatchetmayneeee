@@ -240,7 +240,7 @@ class BoardScene:
         self.start_time = time.time() # Reset thời gian bắt đầu
         self.env.total_time = 0
 
-    def update(self):
+    def update(self, dt):
         # Chức năng cho AI (sẽ được code sau)
         if self.app.ai_mode and not self.game_over:
             # Thêm logic AI ở đây
