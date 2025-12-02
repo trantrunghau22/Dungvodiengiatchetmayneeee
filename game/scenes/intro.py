@@ -73,7 +73,8 @@ class IntroScreen:
                     self.show_load_list = False
                     return
 
-                # check Delete button
+                # check Delete button
+
                 for i, del_rect in enumerate(self.del_file_rects):
                     if del_rect.collidepoint(mouse_pos):
                         file_to_delete = self.saved_files[i]
@@ -158,7 +159,7 @@ class IntroScreen:
 
         # neu user name trong thi lay ten tu file (vd: Hau_save.json -> Hau)
         if self.username.strip() == "":
-            base_name = filename.replace("_save.json", "").replace(".json", "")
+            base_name = filename.replace(".json", "").replace(".json", "")
             self.app.username = base_name
         else:
             self.app.username = self.username
@@ -270,3 +271,4 @@ class IntroScreen:
 
     def update(self):
         pass
+
