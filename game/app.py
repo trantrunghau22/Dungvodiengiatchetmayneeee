@@ -29,7 +29,7 @@ class App:
                     self.active_scene.handle_event(event)
 
             # update + render
-            self.active_scene.update()
+            self.active_scene.update(dt)
             self.active_scene.render()
             
             pygame.display.flip()
