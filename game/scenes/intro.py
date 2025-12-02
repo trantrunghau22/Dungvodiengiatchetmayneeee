@@ -46,12 +46,13 @@ class IntroScreen:
         self.btn_close_list = pygame.Rect(550, 160, 140, 40) # close file
 
     def _scan_saved_files(self):
-        # tim cac file da luu va xep theo thu tu luu gan nhat
+        # tim cac file da luu (chỉ cần kiểm tra .json)
         files = []
         try:
             # lay file
             all_files = os.listdir('.')
             for f in all_files:
+                # [CHỈNH SỬA Ở ĐÂY]: Chỉ cần kiểm tra đuôi .json
                 if f.endswith('.json'):
                     files.append(f)
             
@@ -74,7 +75,6 @@ class IntroScreen:
                     return
 
                 # check Delete button
-
                 for i, del_rect in enumerate(self.del_file_rects):
                     if del_rect.collidepoint(mouse_pos):
                         file_to_delete = self.saved_files[i]
@@ -157,15 +157,19 @@ class IntroScreen:
             print("Error loading game:", e)
             return
 
-        # neu user name trong thi lay ten tu file (vd: Hau_save.json -> Hau)
+        # [CHỈNH SỬA Ở ĐÂY]: Lấy tên từ file
         if self.username.strip() == "":
-            base_name = filename.replace(".json", "").replace(".json", "")
+            # Tên file là Nickname.json. Loại bỏ .json để lấy nickname.
+            base_name = filename.replace(".json", "") 
             self.app.username = base_name
         else:
             self.app.username = self.username
 
         self.app.ai_mode = False 
         self.app.active_scene = BoardScene(env, self.app)
+
+    def update(self, dt): 
+        pass
 
     def render(self):
         self.window.fill((250, 248, 239))
@@ -193,7 +197,8 @@ class IntroScreen:
 
     def _render_load_list(self):
         # ve lop phu
-        pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        # FIX: Khởi tạo biến 'overlay'
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         self.window.blit(overlay, (0, 0))
 
@@ -268,8 +273,3 @@ class IntroScreen:
         text_surf = self.font_small.render(text, True, (250, 248, 239))
         text_rect = text_surf.get_rect(center=rect.center)
         self.window.blit(text_surf, text_rect)
-
-    def update(self, dt):
-        pass
-
-
