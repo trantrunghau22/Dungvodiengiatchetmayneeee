@@ -269,6 +269,7 @@ class IntroScreen:
         text_rect = text_surf.get_rect(center=rect.center)
         self.window.blit(text_surf, text_rect)
 
-    def update(self):
+    def update(self, dt):
         pass
+
 
