@@ -232,7 +232,7 @@ class IntroScreen:
         start_y = self.list_bg_rect.y + 80
         
         if not self.saved_files:
-            empty_txt = self.font_list.render("No saved files found (.json)", True, (150, 150, 150))
+            empty_txt = self.font_list.render("No saved files found", True, (150, 150, 150))
             self.window.blit(empty_txt, (self.list_bg_rect.x + 40, start_y))
         else:
             for i, file_data in enumerate(self.saved_files[:8]):
@@ -288,3 +288,4 @@ class IntroScreen:
 
     def update(self, dt): 
         pass
+
