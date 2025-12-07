@@ -51,6 +51,8 @@ class BoardScene:
         # Vị trí nút Game Over (sử dụng vị trí của đoạn 2 và kích thước của đoạn 1)
         self.replay_rect = pygame.Rect(WINDOW_WIDTH//2 - 145, WINDOW_HEIGHT//2 + 50, 140, 50)
         self.quit_rect = pygame.Rect(WINDOW_WIDTH//2 + 5, WINDOW_HEIGHT//2 + 50, 140, 50)
+        self.last_move_time = 0
+        self.move_delay = 150
 
     # --- Chức năng Quản lý Top Score (Đoạn 2) ---
     def get_current_max_tile_score(self):
