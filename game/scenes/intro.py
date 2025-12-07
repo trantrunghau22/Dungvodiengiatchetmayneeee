@@ -1,7 +1,7 @@
 import pygame
 import os
 import time
-import json # Cần import json để đọc thông tin chế độ chơi từ file save
+import json 
 from game.scenes.board import BoardScene
 from game.core.env_2048 import Game2048Env
 from game.settings import GRID_SIZE, WINDOW_WIDTH, WINDOW_HEIGHT
@@ -11,7 +11,6 @@ class IntroScreen:
         self.app = app
         self.window = app.window
         
-        # --- Cài đặt Font ---
         try:
             self.font_title = pygame.font.SysFont("comicsansms", 140, bold=True)
             self.font_small = pygame.font.SysFont("comicsansms", 32, bold=True)
@@ -23,12 +22,10 @@ class IntroScreen:
             self.font_input = pygame.font.SysFont("arial", 28)
             self.font_list  = pygame.font.SysFont("arial", 24)
 
-        # --- Nút bấm chính ---
         self.button_start = pygame.Rect(240, 420, 300, 60)
         self.button_ai = pygame.Rect(240, 500, 300, 60)
         self.button_load = pygame.Rect(240, 580, 300, 60)
 
-        # --- Nhập tên người chơi ---
         self.username = getattr(self.app, 'username', "")
         self.input_active = False
         self.input_box = pygame.Rect(200, 320, 400, 50)
@@ -36,7 +33,6 @@ class IntroScreen:
         self.color_inactive = (187, 173, 160)
         self.input_color = self.color_inactive
 
-        # --- Giao diện Load Game (Modal) ---
         self.show_load_list = False 
         self.saved_files = [] 
         self.file_rects = []   
@@ -46,22 +42,19 @@ class IntroScreen:
         self.btn_close_list = pygame.Rect(550, 160, 140, 40)
 
     def _scan_saved_files(self):
-        # Quét thư mục và đọc thông tin chế độ chơi từ file save
         files_data = []
         try:
             all_files = os.listdir('.')
             for f in all_files:
                 if f.endswith('.json'):
-                    # Mặc định là Normal
                     mode_str = "Normal"
                     try:
-                        # Mở file để kiểm tra ai_mode
                         with open(f, 'r', encoding='utf-8') as fp:
                             data = json.load(fp)
                             if data.get('ai_mode', False):
                                 mode_str = "AI"
                     except:
-                        pass # Nếu file lỗi thì bỏ qua việc đọc mode
+                        pass 
                     
                     files_data.append({
                         'filename': f,
@@ -69,7 +62,6 @@ class IntroScreen:
                         'mode': mode_str
                     })
             
-            # Sắp xếp file mới nhất lên đầu
             files_data.sort(key=lambda x: x['mtime'], reverse=True)
             self.saved_files = files_data
             
@@ -77,41 +69,34 @@ class IntroScreen:
             print("Error scanning files:", e)
 
     def handle_event(self, event):
-        # --- 1. Xử lý khi đang mở danh sách Load Game ---
         if self.show_load_list:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 
-                # Nút Đóng
                 if self.btn_close_list.collidepoint(mouse_pos):
                     self.show_load_list = False
                     return
 
-                # Nút Xóa file (X)
                 for i, del_rect in enumerate(self.del_file_rects):
                     if del_rect.collidepoint(mouse_pos):
                         file_to_delete = self.saved_files[i]['filename']
                         try:
                             os.remove(file_to_delete)
                             print(f"Deleted file: {file_to_delete}")
-                            self._scan_saved_files() # Quét lại danh sách ngay
+                            self._scan_saved_files()
                         except Exception as e:
                             print(f"Error deleting file: {e}")
                         return 
 
-                # Chọn file để Load
                 for i, rect in enumerate(self.file_rects):
                     if rect.collidepoint(mouse_pos):
                         file_info = self.saved_files[i]
-                        # Chuyển đổi mode string sang boolean
                         is_ai = True if file_info['mode'] == "AI" else False
                         self._load_selected_file(file_info['filename'], is_ai)
                         return
             return
         
-        # --- 2. Xử lý màn hình Intro chính ---
         if event.type == pygame.MOUSEBUTTONDOWN:
-            # Click vào ô nhập tên
             if self.input_box.collidepoint(event.pos):
                 self.input_active = True
                 self.input_color = self.color_active
@@ -119,20 +104,16 @@ class IntroScreen:
                 self.input_active = False
                 self.input_color = self.color_inactive
 
-            # START GAME
             if self.button_start.collidepoint(event.pos):
                 self._start_game(ai_mode=False)
 
-            # AI MODE
             if self.button_ai.collidepoint(event.pos):
                 self._start_game(ai_mode=True)
 
-            # LOAD GAME
             if self.button_load.collidepoint(event.pos):
                 self._scan_saved_files()
                 self.show_load_list = True
 
-        # Nhập tên từ bàn phím
         if event.type == pygame.KEYDOWN:
             if self.input_active:
                 if event.key == pygame.K_RETURN:
@@ -170,25 +151,21 @@ class IntroScreen:
             print("Error loading game:", e)
             return
 
-        # Nếu chưa nhập tên thì lấy tên từ file save
         if self.username.strip() == "":
             base_name = filename.replace(".json", "") 
             self.app.username = base_name
         else:
             self.app.username = self.username
 
-        # Cài đặt chế độ chơi đúng với file save
         self.app.ai_mode = ai_mode 
         self.app.active_scene = BoardScene(env, self.app)
 
     def render(self):
         self.window.fill((250, 248, 239))
 
-        # Tiêu đề
         title = self.font_title.render("2048", True, (243, 178, 122))
         self.window.blit(title, (190, 150))
 
-        # Ô nhập tên
         label = self.font_small.render("Enter username:", True, (119, 110, 101))
         self.window.blit(label, (200, 280))
 
@@ -196,30 +173,24 @@ class IntroScreen:
         text_surface = self.font_input.render(self.username, True, (0, 0, 0))
         self.window.blit(text_surface, (self.input_box.x+10, self.input_box.y+10))
 
-        # Các nút bấm
         self._draw_button(self.button_start, "START")
         self._draw_button(self.button_ai, "AI MODE")
         self._draw_button(self.button_load, "LOAD GAME")
 
-        # Vẽ danh sách load game nếu đang bật
         if self.show_load_list:
             self._render_load_list()
 
     def _render_load_list(self):
-        # Lớp phủ mờ nền
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         self.window.blit(overlay, (0, 0))
 
-        # Khung danh sách
         pygame.draw.rect(self.window, (250, 248, 239), self.list_bg_rect, border_radius=15)
         pygame.draw.rect(self.window, (187, 173, 160), self.list_bg_rect, width=4, border_radius=15)
 
-        # Tiêu đề danh sách
         title_surf = self.font_small.render("Select Saved Game", True, (119, 110, 101))
         self.window.blit(title_surf, (self.list_bg_rect.x + 20, self.list_bg_rect.y + 20))
 
-        # Nút đóng
         mouse_pos = pygame.mouse.get_pos()
         close_color = (243, 178, 122) if self.btn_close_list.collidepoint(mouse_pos) else (187, 173, 160)
         pygame.draw.rect(self.window, close_color, self.btn_close_list, border_radius=8)
@@ -232,6 +203,7 @@ class IntroScreen:
         start_y = self.list_bg_rect.y + 80
         
         if not self.saved_files:
+            # [FIXED] Đã xóa chữ "(.json)"
             empty_txt = self.font_list.render("No saved files found", True, (150, 150, 150))
             self.window.blit(empty_txt, (self.list_bg_rect.x + 40, start_y))
         else:
@@ -239,11 +211,9 @@ class IntroScreen:
                 filename = file_data['filename']
                 mode = file_data['mode']
                 
-                # Vùng hiển thị dòng
                 item_rect = pygame.Rect(self.list_bg_rect.x + 20, start_y + i*50, 560, 40)
                 self.file_rects.append(item_rect)
 
-                # Hiệu ứng hover
                 is_hovered = item_rect.collidepoint(mouse_pos)
                 if is_hovered:
                     pygame.draw.rect(self.window, (238, 228, 218), item_rect, border_radius=5)
@@ -251,11 +221,9 @@ class IntroScreen:
                 else:
                     text_color = (119, 110, 101)
 
-                # Hiển thị Tên File + Chế độ chơi
                 clean_name = filename.replace(".json", "")
                 display_str = f"{i+1}. {clean_name} ({mode})"
                 
-                # Cắt ngắn nếu tên quá dài
                 if len(display_str) > 35:
                     display_str = display_str[:32] + "..."
                 
@@ -263,7 +231,6 @@ class IntroScreen:
                 txt_rect = txt_surf.get_rect(midleft=(item_rect.x + 10, item_rect.centery))
                 self.window.blit(txt_surf, txt_rect)
                 
-                # Vẽ nút xóa (X)
                 del_btn_rect = pygame.Rect(item_rect.right - 40, item_rect.y + 5, 30, 30)
                 self.del_file_rects.append(del_btn_rect)
                 
@@ -288,4 +255,3 @@ class IntroScreen:
 
     def update(self, dt): 
         pass
-
