@@ -58,6 +58,7 @@ class BoardScene:
         self.move_delay = 150 # 150ms delay giữa các bước đi
 
     def get_current_max_tile_score(self):
+        # Hàm này trả về ô lớn nhất (ví dụ 128)
         return self.env.get_score() 
     
     def _load_top_score(self):
@@ -68,6 +69,7 @@ class BoardScene:
             return 0
 
     def _save_top_score(self):
+        # [FIXED] Lưu Top Score dựa trên ô lớn nhất
         current_score = self.get_current_max_tile_score()
         if current_score > self.top_score:
             self.top_score = current_score
@@ -198,7 +200,6 @@ class BoardScene:
                     self.env.total_time += time.time() - self.start_time
                     self.start_time = time.time() 
                     
-                    # [UPDATE] Truyền tham số ai_mode khi lưu
                     current_ai_mode = self.app.ai_mode
                     saved_path = self.env.save_game(filename, ai_mode=current_ai_mode)
                     print(f"Game saved successfully to: {saved_path} (AI Mode: {current_ai_mode})")
@@ -222,7 +223,9 @@ class BoardScene:
         s, r, d, info = self.env.step(action)
         if info.get('moved', True):
             self.state = s
-            current_score = self.env.score
+            
+            # [FIXED] Dùng get_current_max_tile_score() (ô lớn nhất) để so sánh Top Score
+            current_score = self.get_current_max_tile_score()
             if current_score > self.top_score:
                 self.top_score = current_score
             
