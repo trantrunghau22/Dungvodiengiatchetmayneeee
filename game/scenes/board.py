@@ -185,7 +185,7 @@ class BoardScene:
                     self.app.active_scene = IntroScreen(self.app)
             return
 
-        # Chế độ người chơi (Bỏ qua logic chặn AI Mode để bạn luôn chơi được)
+        # Chế độ người chơi
         if event.type == pygame.KEYDOWN:
             current_time = pygame.time.get_ticks()
 
@@ -196,9 +196,12 @@ class BoardScene:
                 filename = f"{self.player_nickname}"
                 try:
                     self.env.total_time += time.time() - self.start_time
-                    self.start_time = time.time() # Reset start_time sau khi cộng dồn
-                    saved_path = self.env.save_game(filename)
-                    print(f"Game saved successfully to: {saved_path}")
+                    self.start_time = time.time() 
+                    
+                    # [UPDATE] Truyền tham số ai_mode khi lưu
+                    current_ai_mode = self.app.ai_mode
+                    saved_path = self.env.save_game(filename, ai_mode=current_ai_mode)
+                    print(f"Game saved successfully to: {saved_path} (AI Mode: {current_ai_mode})")
                 except Exception as e:
                     print(f"Error saving game: {e}")
 
