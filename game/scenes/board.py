@@ -1,8 +1,10 @@
 import pygame
 import os
 import time
+import random
 from game.settings import *
 from game.core.env_2048 import UP, DOWN, LEFT, RIGHT
+from game.core.env_2048 import Game2048Env 
 
 KEY_TO_ACTION = {
     pygame.K_UP: UP,
@@ -31,13 +33,11 @@ class BoardScene:
         self.env.total_time = getattr(self.env, 'total_time', 0) 
         self.top_score = self._load_top_score()
         
-        # --- Font Setup ---
         self.font_title = pygame.font.SysFont(FONT_NAME, 38, bold=True)
         self.font_small = pygame.font.SysFont(FONT_NAME, 22)
         self.font_button = pygame.font.SysFont(FONT_NAME, 20, bold=True)
         self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) 
         
-        # --- Layout ---
         total_gap = (GRID_SIZE + 1) * TILE_GAP
         self.tile_size = (BOARD_SIZE - total_gap) // GRID_SIZE
         self.board_rect = pygame.Rect(BOARD_MARGIN, BOARD_TOP, BOARD_SIZE, BOARD_SIZE)
@@ -51,7 +51,7 @@ class BoardScene:
         # --- Popup States ---
         self.show_exit_confirm = False # Popup xác nhận thoát
         self.show_overwrite_confirm = False # Popup xác nhận ghi đè
-        self.file_to_overwrite = "" # Tên file đang định lưu đè
+        self.pending_quit = False # Cờ đánh dấu có thoát sau khi lưu không
 
         # Nút cho popup Thoát
         cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
@@ -90,7 +90,7 @@ class BoardScene:
             
             current_ai_mode = self.app.ai_mode
             saved_path = self.env.save_game(filename, ai_mode=current_ai_mode)
-            print(f"Game saved successfully to: {saved_path}")
+            print(f"Game saved successfully to: {saved_path} (AI Mode: {current_ai_mode})")
             return True
         except Exception as e:
             print(f"Error saving game: {e}")
@@ -101,6 +101,7 @@ class BoardScene:
 
     def render_header(self):
         current_score = self.get_current_max_tile_score() 
+        
         title = self.font_title.render("2048", True, TEXT_COLOR)
         self.screen.blit(title, (355, 40))
 
@@ -247,7 +248,7 @@ class BoardScene:
         self.render_board()
         self.render_game_over()
         
-        # Vẽ các popup đè lên trên cùng
+        # Vẽ popup
         if self.show_exit_confirm:
             self.render_exit_confirm()
         elif self.show_overwrite_confirm:
@@ -261,12 +262,9 @@ class BoardScene:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
                 if self.btn_save_quit.collidepoint(pos):
-                    # Lưu rồi thoát
-                    # Cần kiểm tra trùng tên ở đây nữa, nhưng để đơn giản ta lưu luôn
-                    # Hoặc logic đúng là: Check overwrite -> Nếu OK thì lưu -> Rồi thoát
+                    # Lưu rồi thoát (kiểm tra ghi đè)
                     if self._check_save_and_overwrite_logic(quit_after=True):
-                        # Nếu không bị trùng tên (lưu thành công ngay) thì thoát luôn
-                        # Nếu trùng tên, hàm trên sẽ bật popup Overwrite và tắt popup Exit
+                        # Nếu lưu thành công ngay (ko cần ghi đè) -> tự thoát trong hàm check
                         pass
                 
                 elif self.btn_quit_nosave.collidepoint(pos):
@@ -282,19 +280,16 @@ class BoardScene:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = event.pos
                 if self.btn_overwrite.collidepoint(pos):
-                    # Người dùng đồng ý ghi đè
                     self._perform_save_game()
                     self.show_overwrite_confirm = False
                     
-                    # Nếu lệnh lưu này đến từ việc muốn thoát game
                     if getattr(self, 'pending_quit', False):
                         self._save_top_score() 
                         self.app.active_scene = IntroScreen(self.app)
 
                 elif self.btn_cancel_save.collidepoint(pos):
-                    # Hủy ghi đè
                     self.show_overwrite_confirm = False
-                    self.pending_quit = False # Hủy lệnh thoát nếu có
+                    self.pending_quit = False
             return
 
         # --- 3. Xử lý Game Over ---
@@ -319,18 +314,14 @@ class BoardScene:
             if event.key == pygame.K_r:
                 self.reset_game()
             
-            # Phím S: Lưu game
             elif event.key == pygame.K_s:
-                self.pending_quit = False # Đây chỉ là lưu thường, không thoát
+                self.pending_quit = False
                 self._check_save_and_overwrite_logic()
 
-            # Phím Q: Yêu cầu thoát
             elif event.key == pygame.K_q:
-                # Thay vì thoát luôn, hiện popup hỏi
                 self.show_exit_confirm = True
 
             elif event.key in KEY_TO_ACTION:
-                # [ANTI-SPAM]
                 if current_time - self.last_move_time < self.move_delay:
                     return 
                 
@@ -342,19 +333,17 @@ class BoardScene:
         """Kiểm tra xem file đã tồn tại chưa để hiện popup cảnh báo"""
         filename = f"{self.player_nickname}.json"
         
-        # Nếu file đã tồn tại -> Hiện popup hỏi
         if os.path.exists(filename):
-            self.show_exit_confirm = False # Tạm ẩn popup thoát nếu có
+            self.show_exit_confirm = False 
             self.show_overwrite_confirm = True
-            self.pending_quit = quit_after # Đánh dấu để biết sau khi lưu có thoát không
-            return False # Chưa lưu được ngay
+            self.pending_quit = quit_after 
+            return False 
         else:
-            # File chưa có -> Lưu luôn
             self._perform_save_game()
             if quit_after:
                 self._save_top_score() 
-                self.app.active_scene = self.app.active_scene.__class__(self.env, self.app) # Trick để import IntroScreen sau
-                # Import lại IntroScreen ở đây để chuyển cảnh
+                # Trick để import cục bộ và chuyển cảnh
+                self.app.active_scene = self.app.active_scene.__class__(self.env, self.app)
                 from game.scenes.intro import IntroScreen 
                 self.app.active_scene = IntroScreen(self.app)
             return True
@@ -363,7 +352,7 @@ class BoardScene:
         s, r, d, info = self.env.step(action)
         if info.get('moved', True):
             self.state = s
-            current_score = self.env.get_score()
+            current_score = self.get_current_max_tile_score()
             if current_score > self.top_score:
                 self.top_score = current_score
             
