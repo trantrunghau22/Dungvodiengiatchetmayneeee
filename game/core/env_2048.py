@@ -16,9 +16,11 @@ class Game2048Env:
         self.board = np.zeros((size, size), dtype=int)
         self.score = 0
         
+        # Biến trạng thái game và thời gian
         self.game_over = False
         self.total_time = 0
         
+        # Biến quản lý điểm cao nhất
         self._top_score = None 
         
         if seed is not None:
@@ -26,14 +28,16 @@ class Game2048Env:
             random.seed(seed)
 
     def reset(self):
+        # Đặt lại trạng thái game
         self.board = np.zeros((self.size, self.size), dtype=int)
         self.score = 0
         self.game_over = False
         self.total_time = 0
-    
+        
+        # Sinh 2 ô khởi đầu
         self._spawn_tile()
         self._spawn_tile()
-    
+        
         self._top_score = None 
         
         return self.get_state()
@@ -41,11 +45,13 @@ class Game2048Env:
     def get_state(self):
         return self.board.copy()
 
+    # --- SỬA LỖI Ở ĐÂY ---
     def get_score(self):
-    return int(self.score)
+        # Trả về tổng điểm tích lũy
+        return int(self.score)
+    # ---------------------
 
     def get_top_score(self):
-        # Return topscore from saved or lastest files
         return int(self._top_score) if self._top_score is not None else None
 
     # --- Spawn & Done functions ---
@@ -59,7 +65,6 @@ class Game2048Env:
         return True
 
     def is_done(self):
-        # Kiểm tra xem game đã kết thúc (thua) hay chưa
         if (self.board == 0).any():
             return False
         # Check hàng ngang
@@ -79,10 +84,9 @@ class Game2048Env:
         assert action in (UP, DOWN, LEFT, RIGHT), "Invalid action"
 
         prev_board = self.get_state()
-        
         prev_score = self.score 
 
-        # Buốc di
+        # Bước đi
         if action == LEFT:
             self._move_left()
         elif action == RIGHT:
@@ -94,22 +98,20 @@ class Game2048Env:
 
         moved = not np.array_equal(prev_board, self.board)
         
-        # Reward là điểm GỘP được cộng thêm vào self.score trong _merge
+        # Reward là điểm GỘP được cộng thêm
         reward = self.score - prev_score 
 
-        # Chỉ spawn 1 ô nếu bàn thay đổi
         if moved:
             self._spawn_tile()
         
-        # Cập nhật trạng thái game over
         done = self.is_done()
         if done:
-             self.game_over = True # Dùng biến trạng thái của Đoạn 1
+             self.game_over = True
 
         info = {"moved": moved}
         return self.get_state(), reward, done, info
 
-    # --- Core logic của game (Giữ lại logic _move, _compress, _merge của Đoạn 1) ---
+    # --- Core logic của game ---
     def _compress(self, row):
         new = row[row != 0]
         if new.size == 0:
@@ -118,7 +120,6 @@ class Game2048Env:
         return np.concatenate([new, zeros])
 
     def _merge(self, row):
-        # Tính toán điểm gộp được trong bước này
         gained = 0
         for i in range(self.size - 1):
             if row[i] != 0 and row[i] == row[i + 1]:
@@ -126,13 +127,11 @@ class Game2048Env:
                 gained += row[i]
                 row[i + 1] = 0
         
-        # Cập nhật TỔNG điểm gộp của game
         self.score += gained
         return row
 
     def _move_left(self):
         for r in range(self.size):
-           
             row = self.board[r].copy()
             row = self._compress(row)
             row = self._merge(row)
@@ -154,27 +153,18 @@ class Game2048Env:
         self._move_right()
         self.board = self.board.T
 
-    # --- Hàm Score tính toán lại (từ Đoạn 2, Dùng để hỗ trợ Load/Export) ---
     def _recompute_score(self):
-      
-        if self.board.size == 0:
-            # Không cần gán self.score = 0 vì nó đã được cập nhật trong _merge
-            pass
-        else:
-            # Nếu cần, bạn có thể gán self.score = int(self.board.max()) nếu muốn score là ô lớn nhất.
-            pass
+        pass
 
-
-    # --- Hàm save/load game (từ Đoạn 2, Bổ sung total_time) ---
+    # --- Hàm save/load game ---
     def save_game(self, filename):
         if not filename.lower().endswith('.json'):
             filename = filename + '.json'
         data = {
             "board": self.board.tolist(),
-            # Lưu self.score là TỔNG điểm gộp (cho mục đích RL/Load chính xác)
             "score": int(self.score), 
             "top_score": int(self._top_score) if self._top_score is not None else None,
-            "total_time": self.total_time, # Bổ sung thời gian
+            "total_time": self.total_time,
             "saved_at": datetime.utcnow().isoformat() + "Z"
         }
         with open(filename, 'w', encoding='utf-8') as f:
@@ -200,15 +190,10 @@ class Game2048Env:
             raise ValueError(f"Saved board has wrong shape {arr.shape}, expected {(self.size, self.size)}")
 
         self.board = arr
-        
-        # Tải score (tổng điểm gộp)
         self.score = int(data.get('score', 0))
-        
-        # Tải total_time và game_over
         self.total_time = data.get('total_time', 0)
-        self.game_over = self.is_done() # Xác định game over bằng cách kiểm tra trạng thái
+        self.game_over = self.is_done()
 
-        # Quản lý top score
         if 'top_score' in data and data['top_score'] is not None:
             try:
                 self._top_score = int(data['top_score'])
@@ -245,7 +230,6 @@ class Game2048Env:
         self.total_time = data.get('total_time', 0)
         self._top_score = int(data['top_score']) if data.get('top_score') is not None else None
         
-        # Cập nhật trạng thái game over sau khi load
         self.game_over = self.is_done()
         
         return self.get_state()
