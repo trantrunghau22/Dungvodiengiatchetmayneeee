@@ -144,8 +144,8 @@ class Game2048Env:
     def _recompute_score(self):
         pass
 
-    # --- SỬA HÀM SAVE/LOAD ---
-    def save_game(self, filename, ai_mode=False): # Thêm tham số ai_mode
+    # --- HÀM SAVE ĐÃ CẬP NHẬT (QUAN TRỌNG) ---
+    def save_game(self, filename, ai_mode=False): 
         if not filename.lower().endswith('.json'):
             filename = filename + '.json'
         
@@ -157,7 +157,7 @@ class Game2048Env:
             "display_score": display_score,
             "top_score": int(self._top_score) if self._top_score is not None else None,
             "total_time": self.total_time,
-            "ai_mode": ai_mode, # Lưu chế độ chơi
+            "ai_mode": ai_mode, # Lưu thêm chế độ chơi
             "saved_at": datetime.utcnow().isoformat() + "Z"
         }
         with open(filename, 'w', encoding='utf-8') as f:
@@ -193,9 +193,6 @@ class Game2048Env:
                 self._top_score = None
         else:
             self._top_score = None
-        
-        # Hàm load_game của env chỉ load dữ liệu bàn cờ
-        # Việc đọc ai_mode sẽ do IntroScreen xử lý khi load file
         
         return self.get_state()
 
