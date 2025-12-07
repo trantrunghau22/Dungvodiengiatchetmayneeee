@@ -1,4 +1,3 @@
-
 import pygame
 import os
 import time
@@ -57,10 +56,6 @@ class BoardScene:
         # --- [ANTI-SPAM] Biến chống spam phím ---
         self.last_move_time = 0
         self.move_delay = 150 # 150ms delay giữa các bước đi
-        
-        # --- Biến cho AI random (tạm thời) ---
-        self.ai_move_delay = 200 # AI đi mỗi 200ms
-        self.last_ai_move = 0
 
     def get_current_max_tile_score(self):
         return self.env.get_score() 
@@ -165,6 +160,13 @@ class BoardScene:
         quit_label = self.font_button.render("MENU", True, (255,255,255))
         self.screen.blit(quit_label, quit_label.get_rect(center=self.quit_rect.center))
 
+    def render(self):
+        self.screen.fill(BACKGROUND_COLOR)
+        self.render_header()
+        self.render_instructions()
+        self.render_board()
+        self.render_game_over()
+
     def handle_event(self, event):
         from game.scenes.intro import IntroScreen 
 
@@ -183,18 +185,7 @@ class BoardScene:
                     self.app.active_scene = IntroScreen(self.app)
             return
 
-        # Nếu là AI Mode thì không nhận phím di chuyển
-        if self.app.ai_mode:
-            # Vẫn nhận phím Q và R
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
-                    self._save_top_score() 
-                    self.app.active_scene = IntroScreen(self.app)
-                elif event.key == pygame.K_r:
-                    self.reset_game()
-            return
-
-        # Chế độ người chơi
+        # Chế độ người chơi (Bỏ qua logic chặn AI Mode để bạn luôn chơi được)
         if event.type == pygame.KEYDOWN:
             current_time = pygame.time.get_ticks()
 
@@ -245,7 +236,4 @@ class BoardScene:
         self.env.total_time = 0
 
     def update(self, dt):
-        # Chức năng cho AI (sẽ được code sau)
-        if self.app.ai_mode and not self.game_over:
-            # Thêm logic AI ở đây
-            pass
+        pass
