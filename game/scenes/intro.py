@@ -46,13 +46,12 @@ class IntroScreen:
         self.btn_close_list = pygame.Rect(550, 160, 140, 40) # close file
 
     def _scan_saved_files(self):
-        # tim cac file da luu (chỉ cần kiểm tra .json)
+        # tim cac file da luu
         files = []
         try:
             # lay file
             all_files = os.listdir('.')
             for f in all_files:
-                # [CHỈNH SỬA Ở ĐÂY]: Chỉ cần kiểm tra đuôi .json
                 if f.endswith('.json'):
                     files.append(f)
             
@@ -130,7 +129,6 @@ class IntroScreen:
     def _start_game(self, ai_mode=False):
         if self.username.strip() == "":
             print("Username required!")
-    
             return
             
         self.app.username = self.username
@@ -157,9 +155,8 @@ class IntroScreen:
             print("Error loading game:", e)
             return
 
-        # [CHỈNH SỬA Ở ĐÂY]: Lấy tên từ file
+        # Lấy tên từ file
         if self.username.strip() == "":
-            # Tên file là Nickname.json. Loại bỏ .json để lấy nickname.
             base_name = filename.replace(".json", "") 
             self.app.username = base_name
         else:
@@ -197,7 +194,6 @@ class IntroScreen:
 
     def _render_load_list(self):
         # ve lop phu
-        # FIX: Khởi tạo biến 'overlay'
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         self.window.blit(overlay, (0, 0))
@@ -233,7 +229,6 @@ class IntroScreen:
                 item_rect = pygame.Rect(self.list_bg_rect.x + 20, start_y + i*50, 560, 40)
                 self.file_rects.append(item_rect)
 
-               
                 is_hovered = item_rect.collidepoint(mouse_pos)
                 if is_hovered:
                     pygame.draw.rect(self.window, (238, 228, 218), item_rect, border_radius=5)
@@ -241,18 +236,21 @@ class IntroScreen:
                 else:
                     text_color = (119, 110, 101)
 
-                # ten file
-                display_name = filename if len(filename) < 35 else filename[:32] + "..."
+                # --- XỬ LÝ TÊN FILE ĐỂ HIỂN THỊ ---
+                # Xóa đuôi .json khi hiển thị
+                clean_name = filename.replace(".json", "")
+                
+                # Cắt ngắn nếu tên quá dài
+                display_name = clean_name if len(clean_name) < 35 else clean_name[:32] + "..."
+                
                 txt_surf = self.font_list.render(f"{i+1}. {display_name}", True, text_color)
                 txt_rect = txt_surf.get_rect(midleft=(item_rect.x + 10, item_rect.centery))
                 self.window.blit(txt_surf, txt_rect)
                 
                 # ve nut xoa
-               
                 del_btn_rect = pygame.Rect(item_rect.right - 40, item_rect.y + 5, 30, 30)
                 self.del_file_rects.append(del_btn_rect)
                 
-               
                 if del_btn_rect.collidepoint(mouse_pos):
                     del_color = (255, 100, 100) #khi chon co mau do
                 else:
@@ -260,7 +258,6 @@ class IntroScreen:
                 
                 pygame.draw.rect(self.window, del_color, del_btn_rect, border_radius=5)
                 
-               
                 x_surf = self.font_list.render("X", True, (255, 255, 255))
                 x_rect = x_surf.get_rect(center=del_btn_rect.center)
                 self.window.blit(x_surf, x_rect)
