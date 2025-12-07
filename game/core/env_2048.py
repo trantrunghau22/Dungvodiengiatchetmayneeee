@@ -16,11 +16,9 @@ class Game2048Env:
         self.board = np.zeros((size, size), dtype=int)
         self.score = 0
         
-        # Biến trạng thái game và thời gian (từ Đoạn 1 & board.py)
         self.game_over = False
         self.total_time = 0
         
-        # Biến quản lý điểm cao nhất (từ Đoạn 2)
         self._top_score = None 
         
         if seed is not None:
@@ -28,24 +26,14 @@ class Game2048Env:
             random.seed(seed)
 
     def reset(self):
-        # Đặt lại trạng thái game
         self.board = np.zeros((self.size, self.size), dtype=int)
         self.score = 0
         self.game_over = False
         self.total_time = 0
-        
-        # Sinh 2 ô khởi đầu
+    
         self._spawn_tile()
         self._spawn_tile()
-        
-        # Trong Đoạn 2 có _recompute_score(), nhưng vì score là tổng điểm gộp, 
-        # nên việc đặt score = 0 ở đây là chính xác.
-        # Tuy nhiên, nếu bạn muốn score là ô lớn nhất (như Đoạn 2 định nghĩa), 
-        # thì cần gọi _recompute_score() sau khi spawn. 
-        # Tôi sẽ dùng định nghĩa score là TỔNG ĐIỂM GỘP (như Đoạn 1) và score max tile (như Đoạn 2 cho _recompute_score),
-        # và cho rằng `board.py` dùng `self.env.get_score()` là điểm hiển thị (max tile).
-
-        # Đảm bảo top score được reset/set giá trị mặc định cho game mới
+    
         self._top_score = None 
         
         return self.get_state()
@@ -53,14 +41,8 @@ class Game2048Env:
     def get_state(self):
         return self.board.copy()
 
-    # --- Các hàm Get Score ---
     def get_score(self):
-        # Trả về ô lớn nhất (theo logic _recompute_score của Đoạn 2)
-        # Hoặc tổng điểm gộp (nếu dùng score tích lũy trong _merge)
-        # Để thống nhất với Đoạn 2 và tránh xung đột với Reward, ta sẽ dùng self.board.max()
-        if (self.board != 0).any():
-            return int(self.board.max())
-        return 0
+    return int(self.score)
 
     def get_top_score(self):
         # Return topscore from saved or lastest files
@@ -98,10 +80,7 @@ class Game2048Env:
 
         prev_board = self.get_state()
         
-        # Đoạn 1: Lưu self.score trước (tổng điểm gộp)
-        # Đoạn 2: Lưu self.score trước (ô lớn nhất)
-        # Dùng logic của Đoạn 1 để tính Reward (điểm tăng thêm)
-        prev_score = self.score # self.score là tổng điểm gộp (chỉ được cập nhật trong _merge)
+        prev_score = self.score 
 
         # Buốc di
         if action == LEFT:
@@ -153,10 +132,7 @@ class Game2048Env:
 
     def _move_left(self):
         for r in range(self.size):
-            # Lưu ý: Đoạn 1 dùng row = self.board[r] (tham chiếu trực tiếp)
-            # Đoạn 2 dùng row = self.board[r].copy() (tạo bản sao)
-            # Để đảm bảo an toàn khi xử lý mảng (dù _compress tạo bản sao mới) 
-            # và thống nhất với Đoạn 2, ta nên dùng .copy() khi trích xuất.
+           
             row = self.board[r].copy()
             row = self._compress(row)
             row = self._merge(row)
@@ -180,13 +156,7 @@ class Game2048Env:
 
     # --- Hàm Score tính toán lại (từ Đoạn 2, Dùng để hỗ trợ Load/Export) ---
     def _recompute_score(self):
-        # Hàm này dùng để đồng bộ self.score (tổng điểm gộp) hoặc max tile
-        # Tuy nhiên, trong Đoạn 2, nó được dùng để gán self.score = max_tile.
-        # Để tránh xung đột với self.score (tổng điểm gộp) dùng cho Reward, 
-        # ta giữ nguyên logic _recompute_score của Đoạn 2 nhưng không gọi nó trong step, 
-        # chỉ dùng cho Load/Export nếu cần self.score là max_tile.
-        # Vì board.py dùng self.env.get_score(), ta sẽ dùng self.board.max() trong get_score()
-        # và giữ self.score (tổng điểm gộp) để tính Reward.
+      
         if self.board.size == 0:
             # Không cần gán self.score = 0 vì nó đã được cập nhật trong _merge
             pass
