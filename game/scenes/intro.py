@@ -203,7 +203,7 @@ class IntroScreen:
         start_y = self.list_bg_rect.y + 80
         
         if not self.saved_files:
-            # [FIXED] Đã xóa chữ "(.json)"
+            # [FIXED] Đã xóa chữ "(.json)" thừa
             empty_txt = self.font_list.render("No saved files found", True, (150, 150, 150))
             self.window.blit(empty_txt, (self.list_bg_rect.x + 40, start_y))
         else:
