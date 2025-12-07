@@ -14,7 +14,7 @@ class Game2048Env:
     def __init__(self, size=4, seed=None):
         self.size = size
         self.board = np.zeros((size, size), dtype=int)
-        self.score = 0
+        self.score = 0 # Biến này dùng để tính Reward cho AI (tổng điểm gộp)
         
         # Biến trạng thái game và thời gian
         self.game_over = False
@@ -45,11 +45,13 @@ class Game2048Env:
     def get_state(self):
         return self.board.copy()
 
-    # --- SỬA LỖI Ở ĐÂY ---
+    # --- [QUAN TRỌNG] SỬA CÁCH TÍNH ĐIỂM TẠI ĐÂY ---
     def get_score(self):
-        # Trả về tổng điểm tích lũy
-        return int(self.score)
-    # ---------------------
+        # Yêu cầu của bạn: Điểm = Ô lớn nhất trên bàn cờ
+        if self.board.size > 0:
+            return int(np.max(self.board))
+        return 0
+    # -----------------------------------------------
 
     def get_top_score(self):
         return int(self._top_score) if self._top_score is not None else None
@@ -84,7 +86,10 @@ class Game2048Env:
         assert action in (UP, DOWN, LEFT, RIGHT), "Invalid action"
 
         prev_board = self.get_state()
-        prev_score = self.score 
+        
+        # self.score ở đây vẫn giữ là tổng điểm gộp để tính Reward cho AI học tốt hơn
+        # (AI học dựa trên việc gộp số sẽ tốt hơn là chỉ nhìn số lớn nhất)
+        prev_internal_score = self.score 
 
         # Bước đi
         if action == LEFT:
@@ -98,8 +103,8 @@ class Game2048Env:
 
         moved = not np.array_equal(prev_board, self.board)
         
-        # Reward là điểm GỘP được cộng thêm
-        reward = self.score - prev_score 
+        # Reward = Điểm gộp thêm được trong bước này
+        reward = self.score - prev_internal_score 
 
         if moved:
             self._spawn_tile()
@@ -127,6 +132,7 @@ class Game2048Env:
                 gained += row[i]
                 row[i + 1] = 0
         
+        # self.score tích lũy điểm gộp (dùng cho Reward AI)
         self.score += gained
         return row
 
@@ -160,9 +166,14 @@ class Game2048Env:
     def save_game(self, filename):
         if not filename.lower().endswith('.json'):
             filename = filename + '.json'
+        
+        # Khi lưu, ta lưu max tile làm score để hiển thị đúng khi load
+        display_score = int(np.max(self.board)) if self.board.size > 0 else 0
+        
         data = {
             "board": self.board.tolist(),
-            "score": int(self.score), 
+            "score": int(self.score), # Lưu internal score để tính tiếp reward nếu cần
+            "display_score": display_score, # Lưu điểm hiển thị (Max Tile)
             "top_score": int(self._top_score) if self._top_score is not None else None,
             "total_time": self.total_time,
             "saved_at": datetime.utcnow().isoformat() + "Z"
@@ -190,7 +201,10 @@ class Game2048Env:
             raise ValueError(f"Saved board has wrong shape {arr.shape}, expected {(self.size, self.size)}")
 
         self.board = arr
+        
+        # Load internal score
         self.score = int(data.get('score', 0))
+        
         self.total_time = data.get('total_time', 0)
         self.game_over = self.is_done()
 
