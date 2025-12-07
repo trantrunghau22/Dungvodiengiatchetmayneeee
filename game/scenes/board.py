@@ -52,7 +52,7 @@ class BoardScene:
         self.replay_rect = pygame.Rect(WINDOW_WIDTH//2 - 145, WINDOW_HEIGHT//2 + 50, 140, 50)
         self.quit_rect = pygame.Rect(WINDOW_WIDTH//2 + 5, WINDOW_HEIGHT//2 + 50, 140, 50)
         self.last_move_time = 0
-        self.move_delay = 150
+        self.move_delay = 100
 
     # --- Chức năng Quản lý Top Score (Đoạn 2) ---
     def get_current_max_tile_score(self):
@@ -175,19 +175,19 @@ class BoardScene:
         self.screen.blit(quit_label, quit_label.get_rect(center=self.quit_rect.center))
 
     # --- Xử lý sự kiện ---
-    def handle_event(self, event):
-        from game.scenes.intro import IntroScreen # Import trong hàm để tránh circular dependency
+  def handle_event(self, event):
+        from game.scenes.intro import IntroScreen 
 
-        # Xử lý sau khi Game Over
+        # --- 1. XỬ LÝ KHI GAME OVER ---
         if self.game_over:
-            # Xử lý R (Replay) và Q (Quit)
+            # Phím tắt: R để chơi lại, Q để thoát ra menu
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     self.reset_game()
                 elif event.key == pygame.K_q:
                     self.app.active_scene = IntroScreen(self.app)
             
-            # Xử lý click chuột
+            # Click chuột vào nút Replay / Menu
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if self.replay_rect.collidepoint(mouse_pos):
@@ -196,44 +196,61 @@ class BoardScene:
                     self.app.active_scene = IntroScreen(self.app)
             return
 
-        # Xử lý khi đang chơi
+        # --- 2. XỬ LÝ KHI ĐANG CHƠI ---
         if event.type == pygame.KEYDOWN:
-            # R: Replay
+            current_time = pygame.time.get_ticks()
+
+            # Phím R: Reset game nhanh
             if event.key == pygame.K_r:
                 self.reset_game()
             
-            # S: Save Game
+            # Phím S: Lưu game
             elif event.key == pygame.K_s:
-                # Lưu game, sử dụng nickname để đặt tên file
                 filename = f"{self.player_nickname}"
                 try:
-                    # Gán thời gian đã chơi vào env trước khi lưu
+                    # Cập nhật thời gian chơi hiện tại vào env để lưu đúng
                     self.env.total_time = time.time() - self.start_time
                     saved_path = self.env.save_game(filename)
                     print(f"Game saved successfully to: {saved_path}")
                 except Exception as e:
                     print(f"Error saving game: {e}")
 
-            # Q: Quit to Menu
+            # Phím Q: Quay về Menu (Lưu điểm cao nhất trước khi thoát)
             elif event.key == pygame.K_q:
-                # Đảm bảo điểm cao nhất được lưu trước khi quay về menu
                 self._save_top_score() 
                 self.app.active_scene = IntroScreen(self.app)
 
-            # Nut di chuyen (Arrows/WASD)
+            # Phím Di chuyển (Arrows / WASD)
             elif event.key in KEY_TO_ACTION:
+                # [ANTI-SPAM] Kiểm tra độ trễ (Delay)
+                # Đảm bảo bạn đã thêm self.last_move_time = 0 và self.move_delay = 150 vào __init__
+                if hasattr(self, 'last_move_time') and hasattr(self, 'move_delay'):
+                    if current_time - self.last_move_time < self.move_delay:
+                        return # Bỏ qua nếu bấm quá nhanh
+                
                 action = KEY_TO_ACTION[event.key]
                 s, r, d, info = self.env.step(action)
-                self.state = s
                 
-                # Cập nhật Top Score tức thì (Đoạn 1)
-                self.top_score = max(self.top_score, self.env.score)
-                
-                if d: # Nếu game over
-                    self.game_over = True
-                    # Lưu lại thời gian chơi
-                    self.env.total_time = time.time() - self.start_time
-                    self._save_top_score() # Lưu điểm cao nhất vào file
+                # Chỉ cập nhật màn hình nếu bàn cờ thực sự có thay đổi
+                if info.get('moved', True):
+                    self.state = s
+                    
+                    # Cập nhật Top Score ngay lập tức nếu phá kỷ lục
+                    current_score = self.env.score
+                    if current_score > self.top_score:
+                        self.top_score = current_score
+
+                    # Cập nhật thời gian di chuyển cuối cùng (cho Anti-spam)
+                    if hasattr(self, 'last_move_time'):
+                        self.last_move_time = current_time
+                    
+                    # Kiểm tra thua game
+                    if d: 
+                        self.game_over = True
+                        self.env.total_time = time.time() - self.start_time
+                        self._save_top_score()
+
+      
 
     def reset_game(self):
         self.state = self.env.reset()
