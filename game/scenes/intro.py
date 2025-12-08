@@ -37,7 +37,6 @@ class IntroScreen:
         self.file_rects = []
         self.del_file_rects = []
         self.modal_rect = pygame.Rect(100, 100, 600, 450)
-        # Nút Close (X) chung cho các modal
         self.btn_close = pygame.Rect(self.modal_rect.right - 40, self.modal_rect.top + 10, 30, 30)
 
     def _load_assets(self):
@@ -87,7 +86,6 @@ class IntroScreen:
     def _handle_modal_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = event.pos
-            # [UPDATE] Nút X (Close) hoạt động cho tất cả modal (trừ Exit bắt buộc chọn Yes/No)
             if self.modal != 'EXIT' and self.btn_close.collidepoint(pos):
                 self.modal = None
                 return
@@ -100,7 +98,6 @@ class IntroScreen:
 
             elif self.modal == 'SETTING':
                 btn_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 160, 40)
-                # [UPDATE] Nút âm thanh rộng hơn (200px)
                 btn_sound = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 200, 40)
                 
                 if btn_lang.collidepoint(pos):
@@ -201,7 +198,6 @@ class IntroScreen:
         txt = TEXTS[self.app.lang]
 
         if self.modal != 'EXIT':
-            # [UPDATE] Vẽ nút X màu đỏ cho tất cả modal (trừ Exit)
             pygame.draw.rect(self.window, (200, 50, 50), self.btn_close, border_radius=5)
             x_txt = self.font_btn.render("X", True, (255,255,255))
             self.window.blit(x_txt, x_txt.get_rect(center=self.btn_close.center))
@@ -227,13 +223,12 @@ class IntroScreen:
             self.window.blit(lbl_snd, (self.modal_rect.x + 50, self.modal_rect.top + 150))
             
             b_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 160, 40)
-            # [UPDATE] Nút âm thanh rộng hơn (200px)
             b_snd = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 200, 40)
             
             val_lang = "TIẾNG VIỆT" if self.app.lang == 'VI' else "ENGLISH"
             val_snd = txt['on'] if self.app.sound_on else txt['off']
             
-            # [UPDATE] Đổi màu chữ sang đen
+            # [FIXED] Dùng self.window thay vì self.screen
             self._draw_btn_custom_text(b_lang, val_lang, (200, 200, 200), (0,0,0))
             self._draw_btn_custom_text(b_snd, val_snd, (200, 200, 200), (0,0,0))
 
@@ -281,6 +276,7 @@ class IntroScreen:
         pygame.draw.rect(self.window, bg_color, rect, border_radius=8)
         pygame.draw.rect(self.window, (50, 50, 50), rect, width=2, border_radius=8)
         t = self.font_btn.render(text, True, txt_color)
-        self.screen.blit(t, t.get_rect(center=rect.center))
+        # [FIXED] Dùng self.window thay vì self.screen
+        self.window.blit(t, t.get_rect(center=rect.center))
 
     def update(self, dt): pass
