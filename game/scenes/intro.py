@@ -14,36 +14,30 @@ class IntroScreen:
         # --- Input Nickname ---
         self.username = getattr(self.app, 'username', "")
         self.input_active = False
-        # Vị trí ô nhập liệu (trên các nút)
         self.input_box = pygame.Rect(WINDOW_WIDTH//2 - 150, 230, 300, 50)
         self.color_inactive = (187, 173, 160)
         self.color_active = (243, 178, 122)
         self.input_color = self.color_inactive
 
-        # --- Layout Buttons (2 cột, 3 hàng) ---
-        # Dời nút xuống một chút để nhường chỗ cho ô nhập tên
+        # --- Buttons ---
         cx = WINDOW_WIDTH // 2
         cy = WINDOW_HEIGHT // 2 + 80 
         w, h = 180, 50
         gap = 20
-        
-        # Cột 1
         self.btn_new = pygame.Rect(cx - w - gap, cy - h - gap, w, h)
         self.btn_load = pygame.Rect(cx - w - gap, cy, w, h)
         self.btn_setting = pygame.Rect(cx - w - gap, cy + h + gap, w, h)
-        
-        # Cột 2
         self.btn_credit = pygame.Rect(cx + gap, cy - h - gap, w, h)
         self.btn_tutorial = pygame.Rect(cx + gap, cy, w, h)
         self.btn_exit = pygame.Rect(cx + gap, cy + h + gap, w, h)
 
-        # --- Trạng thái Modal ---
+        # --- Modal ---
         self.modal = None 
         self.saved_files = []
         self.file_rects = []
         self.del_file_rects = []
-        
-        self.modal_rect = pygame.Rect(100, 100, 600, 450) # Tăng kích thước modal cho Credits dài
+        self.modal_rect = pygame.Rect(100, 100, 600, 450)
+        # Nút Close (X) chung cho các modal
         self.btn_close = pygame.Rect(self.modal_rect.right - 40, self.modal_rect.top + 10, 30, 30)
 
     def _load_assets(self):
@@ -51,7 +45,6 @@ class IntroScreen:
         self.font_btn = pygame.font.SysFont("arial", 24, bold=True)
         self.font_small = pygame.font.SysFont("arial", 20)
         self.font_input = pygame.font.SysFont("arial", 28)
-        
         fpath = os.path.join(FONT_DIR, 'shin_font.ttf')
         if os.path.exists(fpath):
             self.font_title = pygame.font.Font(fpath, 80)
@@ -66,7 +59,6 @@ class IntroScreen:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = event.pos
-            # Check Input Box
             if self.input_box.collidepoint(pos):
                 self.input_active = True
                 self.input_color = self.color_active
@@ -74,7 +66,6 @@ class IntroScreen:
                 self.input_active = False
                 self.input_color = self.color_inactive
 
-            # Check Buttons
             if self.btn_new.collidepoint(pos): self.modal = 'NEW_GAME'
             elif self.btn_load.collidepoint(pos): 
                 self._scan_files()
@@ -87,17 +78,16 @@ class IntroScreen:
         if event.type == pygame.KEYDOWN:
             if self.input_active:
                 if event.key == pygame.K_RETURN:
-                    # Bấm Enter ở ô nhập tên -> Mở popup chọn chế độ chơi (giống bấm New Game)
                     self.modal = 'NEW_GAME'
                 elif event.key == pygame.K_BACKSPACE:
                     self.username = self.username[:-1]
                 else:
-                    if len(self.username) < 12: # Giới hạn độ dài tên
-                        self.username += event.unicode
+                    if len(self.username) < 12: self.username += event.unicode
 
     def _handle_modal_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = event.pos
+            # [UPDATE] Nút X (Close) hoạt động cho tất cả modal (trừ Exit bắt buộc chọn Yes/No)
             if self.modal != 'EXIT' and self.btn_close.collidepoint(pos):
                 self.modal = None
                 return
@@ -109,9 +99,9 @@ class IntroScreen:
                 elif btn_ai.collidepoint(pos): self._start_game(ai=True)
 
             elif self.modal == 'SETTING':
-                # [CẬP NHẬT] Tăng chiều rộng nút Language để vừa chữ TIẾNG VIỆT
-                btn_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 180, 40)
-                btn_sound = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 180, 40)
+                btn_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 160, 40)
+                # [UPDATE] Nút âm thanh rộng hơn (200px)
+                btn_sound = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 200, 40)
                 
                 if btn_lang.collidepoint(pos):
                     self.app.lang = 'EN' if self.app.lang == 'VI' else 'VI'
@@ -139,14 +129,10 @@ class IntroScreen:
                         self._load_game(f['filename'], is_ai)
 
     def _start_game(self, ai):
-        # Validate Username
         if self.username.strip() == "":
-            print("Vui lòng nhập tên!") # Có thể thêm hiệu ứng rung lắc ô nhập
-            self.modal = None # Đóng modal để người dùng nhập tên
-            self.input_active = True
-            self.input_color = self.color_active
+            print("Vui lòng nhập tên!")
+            self.modal = None; self.input_active = True; self.input_color = self.color_active
             return
-        
         self.app.username = self.username
         self.app.ai_mode = ai
         env = Game2048Env(size=GRID_SIZE)
@@ -160,7 +146,6 @@ class IntroScreen:
             env.load_game(fname)
             self.app.ai_mode = ai
             self.app.active_scene = BoardScene(env, self.app)
-            # Nếu load game, lấy tên từ file hoặc dùng tên hiện tại
             if self.username: self.app.username = self.username
             else: self.app.username = fname.replace('.json', '')
         except: pass
@@ -182,23 +167,16 @@ class IntroScreen:
 
     def render(self):
         self.window.fill(BACKGROUND_COLOR)
-        
-        # [CẬP NHẬT] Xóa chữ SHIN, chỉ để 2048 hoặc tên nhóm
         title = self.font_title.render("2048", True, (243, 178, 122))
         self.window.blit(title, title.get_rect(center=(WINDOW_WIDTH//2, 120)))
-        
         sub = self.font_small.render("GROUP THỢ ĐIỆN VIẾT CODE", True, TEXT_COLOR)
         self.window.blit(sub, sub.get_rect(center=(WINDOW_WIDTH//2, 180)))
 
-        # [CẬP NHẬT] Vẽ ô nhập Nickname
         label = self.font_small.render("Nickname:", True, TEXT_COLOR)
         self.window.blit(label, (self.input_box.x, self.input_box.y - 25))
-        
         pygame.draw.rect(self.window, (255, 255, 255), self.input_box, border_radius=5)
         pygame.draw.rect(self.window, self.input_color, self.input_box, width=2, border_radius=5)
-        
         name_surf = self.font_input.render(self.username, True, (0,0,0))
-        # Canh giữa text trong ô
         self.window.blit(name_surf, (self.input_box.x + 10, self.input_box.centery - name_surf.get_height()//2))
 
         txt = TEXTS[self.app.lang]
@@ -217,13 +195,13 @@ class IntroScreen:
         s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         s.fill((0,0,0,150))
         self.window.blit(s, (0,0))
-        
         pygame.draw.rect(self.window, (250, 248, 239), self.modal_rect, border_radius=15)
         pygame.draw.rect(self.window, TEXT_COLOR, self.modal_rect, width=3, border_radius=15)
         
         txt = TEXTS[self.app.lang]
 
         if self.modal != 'EXIT':
+            # [UPDATE] Vẽ nút X màu đỏ cho tất cả modal (trừ Exit)
             pygame.draw.rect(self.window, (200, 50, 50), self.btn_close, border_radius=5)
             x_txt = self.font_btn.render("X", True, (255,255,255))
             self.window.blit(x_txt, x_txt.get_rect(center=self.btn_close.center))
@@ -248,15 +226,16 @@ class IntroScreen:
             self.window.blit(lbl_lang, (self.modal_rect.x + 50, self.modal_rect.top + 90))
             self.window.blit(lbl_snd, (self.modal_rect.x + 50, self.modal_rect.top + 150))
             
-            # [CẬP NHẬT] Ô bự ra (180px width)
-            b_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 180, 40)
-            b_snd = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 180, 40)
+            b_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 160, 40)
+            # [UPDATE] Nút âm thanh rộng hơn (200px)
+            b_snd = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 200, 40)
             
             val_lang = "TIẾNG VIỆT" if self.app.lang == 'VI' else "ENGLISH"
             val_snd = txt['on'] if self.app.sound_on else txt['off']
             
-            self._draw_btn(b_lang, val_lang, (200, 200, 200))
-            self._draw_btn(b_snd, val_snd, (200, 200, 200))
+            # [UPDATE] Đổi màu chữ sang đen
+            self._draw_btn_custom_text(b_lang, val_lang, (200, 200, 200), (0,0,0))
+            self._draw_btn_custom_text(b_snd, val_snd, (200, 200, 200), (0,0,0))
 
         elif self.modal == 'TUTORIAL':
             y = self.modal_rect.top + 50
@@ -266,10 +245,8 @@ class IntroScreen:
                 y += 35
 
         elif self.modal == 'CREDIT':
-            # [CẬP NHẬT] Render danh sách credits dài
             y = self.modal_rect.top + 40
             for line in txt['credit_content']:
-                # Dùng font nhỏ hơn để vừa danh sách dài
                 t = self.font_small.render(line, True, TEXT_COLOR)
                 self.window.blit(t, t.get_rect(center=(self.modal_rect.centerx, y)))
                 y += 30
@@ -299,5 +276,11 @@ class IntroScreen:
         pygame.draw.rect(self.window, (100, 50, 0), rect, width=2, border_radius=10)
         t = self.font_btn.render(text, True, (0,0,0))
         self.window.blit(t, t.get_rect(center=rect.center))
+
+    def _draw_btn_custom_text(self, rect, text, bg_color, txt_color):
+        pygame.draw.rect(self.window, bg_color, rect, border_radius=8)
+        pygame.draw.rect(self.window, (50, 50, 50), rect, width=2, border_radius=8)
+        t = self.font_btn.render(text, True, txt_color)
+        self.screen.blit(t, t.get_rect(center=rect.center))
 
     def update(self, dt): pass
