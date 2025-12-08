@@ -1,29 +1,37 @@
 import os
 import pygame
 
-# --- Cấu hình Màn hình Cơ sở (Base Resolution) ---
-# Dùng hệ quy chiếu này để thiết kế, sau đó scale lên
-BASE_WIDTH = 800
-BASE_HEIGHT = 600
-
 # Khởi tạo pygame để lấy info màn hình (chỉ chạy 1 lần khi import)
 pygame.init()
 info = pygame.display.Info()
 SCREEN_WIDTH = info.current_w
 SCREEN_HEIGHT = info.current_h
 
+# --- Cấu hình Màn hình Cơ sở (Base Resolution) ---
+# Dùng hệ quy chiếu 800x600 để thiết kế, sau đó scale lên
+BASE_WIDTH = 800
+BASE_HEIGHT = 600
+
 # Tính tỉ lệ scale (chọn tỉ lệ nhỏ hơn để fit màn hình)
 SCALE_X = SCREEN_WIDTH / BASE_WIDTH
 SCALE_Y = SCREEN_HEIGHT / BASE_HEIGHT
-SCALE = min(SCALE_X, SCALE_Y) * 0.9 # Nhân 0.9 để chừa chút lề nếu cần
+SCALE = min(SCALE_X, SCALE_Y) * 0.9 # Nhân 0.9 để chừa chút lề
 
-# Tính toán kích thước thực tế sau khi scale
+# Kích thước cửa sổ thực tế (Fullscreen)
 WINDOW_WIDTH = SCREEN_WIDTH
 WINDOW_HEIGHT = SCREEN_HEIGHT
 
-# Căn giữa nội dung game
+# Offset để căn giữa nội dung game
 OFFSET_X = (WINDOW_WIDTH - (BASE_WIDTH * SCALE)) // 2
 OFFSET_Y = (WINDOW_HEIGHT - (BASE_HEIGHT * SCALE)) // 2
+
+# --- Hàm helper để scale kích thước và tọa độ ---
+def s(value):
+    return int(value * SCALE)
+
+def s_rect(x, y, w, h):
+    # x, y, w, h là kích thước trong hệ quy chiếu 800x600
+    return pygame.Rect(OFFSET_X + s(x), OFFSET_Y + s(y), s(w), s(h))
 
 # --- Cấu hình Game ---
 ROWS = 4
@@ -31,10 +39,23 @@ COLS = 4
 GRID_SIZE = 4
 
 # Layout Bàn cờ (Hệ quy chiếu Base 800x600)
+# Các biến này cần được định nghĩa để board.py sử dụng
+BASE_BOARD_MARGIN_LEFT = 260
+BASE_BOARD_MARGIN_TOP = 180
 BASE_TILE_SIZE = 80
 BASE_TILE_GAP = 10
+
+# Tính toán kích thước Base
 BASE_BOARD_WIDTH = (BASE_TILE_SIZE * GRID_SIZE) + (BASE_TILE_GAP * (GRID_SIZE + 1))
 BASE_BOARD_HEIGHT = BASE_BOARD_WIDTH 
+
+# Các biến Scale (để board.py dùng)
+BOARD_MARGIN_LEFT = OFFSET_X + s(BASE_BOARD_MARGIN_LEFT)
+BOARD_MARGIN_TOP = OFFSET_Y + s(BASE_BOARD_MARGIN_TOP)
+BOARD_WIDTH = s(BASE_BOARD_WIDTH)
+BOARD_HEIGHT = s(BASE_BOARD_HEIGHT)
+TILE_SIZE = s(BASE_TILE_SIZE)
+TILE_GAP = s(BASE_TILE_GAP)
 
 # --- Màu sắc ---
 BACKGROUND_COLOR = (255, 253, 208)
@@ -60,17 +81,10 @@ FONT_DIR = os.path.join(ASSETS_DIR, 'fonts')
 
 FONT_NAME = "comicsansms"
 FPS = 60
-TILE_RADIUS = int(10 * SCALE) # Scale bo góc
+TILE_RADIUS = int(10 * SCALE)
 TOP_SCORE_FILE = "top_score.txt"
 
-# Hàm helper để scale kích thước và tọa độ
-def s(value):
-    return int(value * SCALE)
-
-def s_rect(x, y, w, h):
-    return pygame.Rect(OFFSET_X + s(x), OFFSET_Y + s(y), s(w), s(h))
-
-# --- TỪ ĐIỂN NGÔN NGỮ (Giữ nguyên) ---
+# --- TỪ ĐIỂN NGÔN NGỮ ---
 TEXTS = {
     'VI': {
         'new_game': 'GAME MỚI', 'load_game': 'TẢI GAME', 'setting': 'CÀI ĐẶT',
