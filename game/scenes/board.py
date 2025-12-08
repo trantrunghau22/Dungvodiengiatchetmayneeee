@@ -1,6 +1,7 @@
 import pygame
 import os
 import time
+import random
 from game.settings import *
 from game.core.env_2048 import UP, DOWN, LEFT, RIGHT
 
