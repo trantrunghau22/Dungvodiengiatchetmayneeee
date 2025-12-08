@@ -20,10 +20,8 @@ BOARD_HEIGHT = BOARD_WIDTH
 BACKGROUND_COLOR = (255, 253, 208)
 TEXT_COLOR = (60, 50, 50)
 SCORE_TEXT_COLOR = (0, 0, 0)
-
-# [FIXED] Thêm màu nền cho ô điểm số
-SCORE_BG_COLOR = (200, 190, 180) 
-BOARD_BG_COLOR = (150, 140, 130) # Màu nền khung bàn cờ
+SCORE_BG_COLOR = (187, 173, 160)
+BOARD_BG_COLOR = (187, 173, 160)
 
 TILE_COLORS = {
     0: (205, 193, 180), 2: (238, 228, 218), 4: (237, 224, 200),
@@ -65,7 +63,19 @@ TEXTS = {
             "- Mục tiêu: Tạo ra ô số 2048!",
             "- Bấm 'S' để lưu game, 'Q' để ra menu."
         ],
-        'credit_content': ["Game 2048", "Code by: Bạn & AI", "Graphics: Shin Style"]
+        'credit_content': [
+            "GAME 2048",
+            "HCMUS - 25CTT3",
+            "GROUP THỢ ĐIỆN VIẾT CODE",
+            
+            "Trần Trung Hậu - 25120188",
+            "Đào Khánh Băng - 25120162",
+            "Vũ Gia Bảo - 25120168",
+            "Phạm Hoàng Tường An - 25120159",
+            "Ngô Bảo - 25120165",
+            "Trần Phạm Đăng Duy - 25120138",
+            "GRAPHICS: SHIN STYLE"
+        ]
     },
     'EN': {
         'new_game': 'NEW GAME', 'load_game': 'LOAD GAME', 'setting': 'SETTINGS',
@@ -85,6 +95,17 @@ TEXTS = {
             "- Goal: Create the 2048 tile!",
             "- Press 'S' to Save, 'Q' for Menu."
         ],
-        'credit_content': ["2048 Game", "Code by: You & AI", "Graphics: Shin Style"]
+        'credit_content': [
+            "HCMUS - 25CTT3",
+            "GROUP THỢ ĐIỆN VIẾT CODE",
+            "GAME 2048",
+            "Trần Trung Hậu - 25120188",
+            "Vũ Gia Bảo - 25120168",
+            "Đào Khánh Băng - 25120162",
+            "Phạm Hoàng Tường An - 25120159",
+            "Ngô Bảo - 25120165",
+            "Trần Phạm Đăng Duy - 25120138",
+            "GRAPHICS: SHIN STYLE"
+        ]
     }
 }
