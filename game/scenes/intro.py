@@ -36,7 +36,10 @@ class IntroScreen:
         self.saved_files = []
         self.file_rects = []
         self.del_file_rects = []
-        self.modal_rect = pygame.Rect(100, 100, 600, 450)
+        
+        # Center Modal
+        mw, mh = 600, 450
+        self.modal_rect = pygame.Rect((WINDOW_WIDTH-mw)//2, (WINDOW_HEIGHT-mh)//2, mw, mh)
         # Nút Close (X) chung cho các modal
         self.btn_close = pygame.Rect(self.modal_rect.right - 40, self.modal_rect.top + 10, 30, 30)
 
@@ -93,8 +96,11 @@ class IntroScreen:
                 return
 
             if self.modal == 'NEW_GAME':
-                btn_normal = pygame.Rect(self.modal_rect.centerx - 100, self.modal_rect.centery - 40, 200, 50)
-                btn_ai = pygame.Rect(self.modal_rect.centerx - 100, self.modal_rect.centery + 30, 200, 50)
+                # Helper tạo rect từ tâm modal (tương tự board.py)
+                mx, my = self.modal_rect.centerx, self.modal_rect.centery
+                btn_normal = pygame.Rect(mx - 100, my - 40, 200, 50)
+                btn_ai = pygame.Rect(mx - 100, my + 30, 200, 50)
+                
                 if btn_normal.collidepoint(pos): self._start_game(ai=False)
                 elif btn_ai.collidepoint(pos): self._start_game(ai=True)
 
@@ -233,7 +239,7 @@ class IntroScreen:
             val_lang = "TIẾNG VIỆT" if self.app.lang == 'VI' else "ENGLISH"
             val_snd = txt['on'] if self.app.sound_on else txt['off']
             
-            # [UPDATE] Đổi màu chữ sang đen
+            # [UPDATE] Đổi màu chữ sang đen bằng hàm _draw_btn_custom_text
             self._draw_btn_custom_text(b_lang, val_lang, (200, 200, 200), (0,0,0))
             self._draw_btn_custom_text(b_snd, val_snd, (200, 200, 200), (0,0,0))
 
