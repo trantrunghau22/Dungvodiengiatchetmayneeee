@@ -21,6 +21,10 @@ BACKGROUND_COLOR = (255, 253, 208)
 TEXT_COLOR = (60, 50, 50)
 SCORE_TEXT_COLOR = (0, 0, 0)
 
+# [FIXED] Thêm màu nền cho ô điểm số
+SCORE_BG_COLOR = (200, 190, 180) 
+BOARD_BG_COLOR = (150, 140, 130) # Màu nền khung bàn cờ
+
 TILE_COLORS = {
     0: (205, 193, 180), 2: (238, 228, 218), 4: (237, 224, 200),
     8: (242, 177, 121), 16: (245, 149, 99), 32: (246, 124, 95),
