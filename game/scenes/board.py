@@ -1,372 +1,272 @@
 import pygame
 import os
 import time
-import random
 from game.settings import *
 from game.core.env_2048 import UP, DOWN, LEFT, RIGHT
-from game.core.env_2048 import Game2048Env 
 
 KEY_TO_ACTION = {
-    pygame.K_UP: UP,
-    pygame.K_w: UP,
-    pygame.K_DOWN: DOWN,
-    pygame.K_s: DOWN,
-    pygame.K_LEFT: LEFT,
-    pygame.K_a: LEFT,
-    pygame.K_RIGHT: RIGHT,
-    pygame.K_d: RIGHT,
+    pygame.K_UP: UP, pygame.K_w: UP,
+    pygame.K_DOWN: DOWN, pygame.K_s: DOWN,
+    pygame.K_LEFT: LEFT, pygame.K_a: LEFT,
+    pygame.K_RIGHT: RIGHT, pygame.K_d: RIGHT,
 }
-
-TOP_SCORE_FILE = "top_score.txt"
 
 class BoardScene:
     def __init__(self, env, app):
         self.app = app
         self.screen = app.window 
         self.env = env           
-        
         self.state = self.env.get_state() 
         self.game_over = False
-        self.player_nickname = getattr(app, 'username', 'Player')
         
+        # Load assets (Font)
+        # Ưu tiên font custom nếu có
+        fpath = os.path.join(FONT_DIR, 'shin_font.ttf')
+        if os.path.exists(fpath):
+            self.font_score = pygame.font.Font(fpath, 30)
+            self.font_tile = pygame.font.Font(fpath, 40)
+            self.font_popup = pygame.font.Font(fpath, 24)
+        else:
+            self.font_score = pygame.font.SysFont(FONT_NAME, 30, bold=True)
+            self.font_tile = pygame.font.SysFont(FONT_NAME, 40, bold=True)
+            self.font_popup = pygame.font.SysFont("arial", 24)
+        
+        # Time & Score
         self.start_time = time.time()
         self.env.total_time = getattr(self.env, 'total_time', 0) 
-        self.top_score = self._load_top_score()
-        
-        self.font_title = pygame.font.SysFont(FONT_NAME, 38, bold=True)
-        self.font_small = pygame.font.SysFont(FONT_NAME, 22)
-        self.font_button = pygame.font.SysFont(FONT_NAME, 20, bold=True)
-        self.font_guide = pygame.font.SysFont(FONT_NAME, 18, bold=False) 
-        
-        total_gap = (GRID_SIZE + 1) * TILE_GAP
-        self.tile_size = (BOARD_SIZE - total_gap) // GRID_SIZE
-        self.board_rect = pygame.Rect(BOARD_MARGIN, BOARD_TOP, BOARD_SIZE, BOARD_SIZE)
-        
-        self.replay_rect = pygame.Rect(WINDOW_WIDTH//2 - 120, WINDOW_HEIGHT//2 + 50, 100, 50)
-        self.quit_rect = pygame.Rect(WINDOW_WIDTH//2 + 20, WINDOW_HEIGHT//2 + 50, 100, 50)
+        self._load_top_score()
+        self.top_score = self.env.get_top_score() or 0
 
+        # Anti-spam
         self.last_move_time = 0
         self.move_delay = 150 
 
-        # --- Popup States ---
-        self.show_exit_confirm = False # Popup xác nhận thoát
-        self.show_overwrite_confirm = False # Popup xác nhận ghi đè
+        # --- SAVE GAME UI STATES ---
+        self.mode = 'PLAY' # 'PLAY', 'INPUT_NAME', 'CONFIRM_OVERWRITE', 'EXIT_CONFIRM'
+        self.save_name = ""
         self.pending_quit = False # Cờ đánh dấu có thoát sau khi lưu không
-
-        # Nút cho popup Thoát
+        
+        # Popup Rects
         cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
-        self.btn_save_quit = pygame.Rect(cx - 100, cy - 60, 200, 40)
-        self.btn_quit_nosave = pygame.Rect(cx - 100, cy, 200, 40)
-        self.btn_cancel_exit = pygame.Rect(cx - 100, cy + 60, 200, 40)
+        self.popup_rect = pygame.Rect(cx - 200, cy - 100, 400, 200)
+        self.input_rect = pygame.Rect(cx - 150, cy, 300, 40)
+        self.btn_confirm_1 = pygame.Rect(cx - 110, cy + 60, 100, 40) # Save / Overwrite / Yes
+        self.btn_confirm_2 = pygame.Rect(cx + 10, cy + 60, 100, 40)  # Rename / No
+        
+        # Game Over Buttons
+        self.replay_rect = pygame.Rect(cx - 120, cy + 50, 100, 50)
+        self.quit_rect = pygame.Rect(cx + 20, cy + 50, 100, 50)
 
-        # Nút cho popup Ghi đè
-        self.btn_overwrite = pygame.Rect(cx - 110, cy + 20, 100, 40)
-        self.btn_cancel_save = pygame.Rect(cx + 10, cy + 20, 100, 40)
+        # Board Layout
+        total_gap = (GRID_SIZE + 1) * TILE_GAP
+        self.tile_size = (BOARD_WIDTH - total_gap) // GRID_SIZE
+        # Căn giữa bàn cờ hoặc dùng vị trí cố định
+        self.board_rect = pygame.Rect(BOARD_MARGIN_LEFT, BOARD_MARGIN_TOP, BOARD_WIDTH, BOARD_HEIGHT)
 
-    def get_current_max_tile_score(self):
-        return self.env.get_score() 
-    
     def _load_top_score(self):
         try:
             with open(TOP_SCORE_FILE, 'r') as f:
-                return int(f.read().strip())
-        except (FileNotFoundError, ValueError):
-            return 0
-
-    def _save_top_score(self):
-        current_score = self.get_current_max_tile_score()
-        if current_score > self.top_score:
-            self.top_score = current_score
-            with open(TOP_SCORE_FILE, 'w') as f:
-                f.write(str(self.top_score))
-
-    def _perform_save_game(self):
-        """Hàm thực hiện lưu game thực sự"""
-        filename = f"{self.player_nickname}"
-        try:
-            # Cập nhật thời gian chơi
-            self.env.total_time += time.time() - self.start_time
-            self.start_time = time.time() # Reset mốc thời gian
-            
-            current_ai_mode = self.app.ai_mode
-            saved_path = self.env.save_game(filename, ai_mode=current_ai_mode)
-            print(f"Game saved successfully to: {saved_path} (AI Mode: {current_ai_mode})")
-            return True
-        except Exception as e:
-            print(f"Error saving game: {e}")
-            return False
-
-    def draw_rounded(self, surf, rect, color, radius=TILE_RADIUS):
-        pygame.draw.rect(surf, color, rect, border_radius=radius)
-
-    def render_header(self):
-        current_score = self.get_current_max_tile_score() 
-        
-        title = self.font_title.render("2048", True, TEXT_COLOR)
-        self.screen.blit(title, (355, 40))
-
-        score_rect = pygame.Rect(WINDOW_WIDTH - 150, 40, 145, 50)
-        self.draw_rounded(self.screen, score_rect, SCORE_BG_COLOR)
-        scr_text = self.font_small.render(f"Score: {current_score}", True, (255,255,255))
-        self.screen.blit(scr_text, (score_rect.x + 16, score_rect.y + 14))
-
-        nickname_rect = pygame.Rect(5, 40, 160, 50)
-        self.draw_rounded(self.screen, nickname_rect, SCORE_BG_COLOR)
-        nick_text = self.font_small.render(f"P: {self.player_nickname}", True, (255,255,255))
-        self.screen.blit(nick_text, (nickname_rect.x + 10, nickname_rect.y + 14)) 
-        
-        top_score_rect = pygame.Rect(WINDOW_WIDTH - 300, 40, 145, 50)
-        self.draw_rounded(self.screen, top_score_rect, SCORE_BG_COLOR)
-        top_score_text = self.font_small.render(f"Top: {self.top_score}", True, (255,255,255))
-        self.screen.blit(top_score_text, (top_score_rect.x + 16, top_score_rect.y + 14))
-
-        if not self.game_over:
-             elapsed_time = int(time.time() - self.start_time + self.env.total_time)
-        else:
-             elapsed_time = int(self.env.total_time)
-             
-        minutes = elapsed_time // 60
-        seconds = elapsed_time % 60
-        time_str = f"Time: {minutes:02d}:{seconds:02d}"
-        
-        time_text = self.font_small.render(time_str, True, TEXT_COLOR)
-        self.screen.blit(time_text, (WINDOW_WIDTH//2 - 60, 90))
-
-    def render_instructions(self):
-        text = "Controls: [Arrows/WASD] Move   [S] Save Game   [R] Replay   [Q] Menu"
-        guide_surf = self.font_guide.render(text, True, (119, 110, 101)) 
-        guide_rect = guide_surf.get_rect(center=(WINDOW_WIDTH // 2, 115))
-        self.screen.blit(guide_surf, guide_rect)
-
-    def render_board(self):
-        self.draw_rounded(self.screen, self.board_rect, BOARD_BG_COLOR, radius=12)
-        self.state = self.env.get_state()
-        
-        for r in range(GRID_SIZE):
-            for c in range(GRID_SIZE):
-                x = self.board_rect.x + TILE_GAP + c * (self.tile_size + TILE_GAP)
-                y = self.board_rect.y + TILE_GAP + r * (self.tile_size + TILE_GAP)
-                rect = pygame.Rect(x, y, self.tile_size, self.tile_size)
-                
-                val = int(self.state[r, c])
-                color = TILE_COLORS.get(val, DEFAULT_LARGE_TILE_COLOR)
-                self.draw_rounded(self.screen, rect, color, radius=TILE_RADIUS)
-                
-                if val != 0:
-                    digits = len(str(val))
-                    size = 48 if digits <= 3 else max(26, 100 - digits * 10)
-                    font = pygame.font.SysFont(FONT_NAME, size, bold=True)
-                    text_color = (0,0,0) if val <= 4 else (255,255,255)
-                    text = font.render(str(val), True, text_color)
-                    self.screen.blit(text, text.get_rect(center=rect.center))
-
-    def render_game_over(self):
-        if not self.game_over:
-            return
-        s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-        s.fill((0, 0, 0, 128))
-        self.screen.blit(s, (0, 0))
-        
-        go_text = self.font_title.render("GAME OVER", True, (255, 0, 0))
-        self.screen.blit(go_text, go_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50)))
-        
-        self.draw_rounded(self.screen, self.replay_rect, (243, 178, 122))
-        replay_label = self.font_button.render("REPLAY", True, (255,255,255))
-        self.screen.blit(replay_label, replay_label.get_rect(center=self.replay_rect.center))
-        
-        self.draw_rounded(self.screen, self.quit_rect, (243, 178, 122))
-        quit_label = self.font_button.render("MENU", True, (255,255,255))
-        self.screen.blit(quit_label, quit_label.get_rect(center=self.quit_rect.center))
-
-    # --- Render Popup xác nhận thoát ---
-    def render_exit_confirm(self):
-        if not self.show_exit_confirm: return
-        
-        # Nền mờ
-        s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-        s.fill((0, 0, 0, 150))
-        self.screen.blit(s, (0, 0))
-
-        # Khung thoại
-        box_rect = pygame.Rect(WINDOW_WIDTH//2 - 180, WINDOW_HEIGHT//2 - 120, 360, 260)
-        pygame.draw.rect(self.screen, (250, 248, 239), box_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (119, 110, 101), box_rect, width=3, border_radius=10)
-
-        # Tiêu đề
-        msg = self.font_button.render("Unsaved progress will be lost!", True, (119, 110, 101))
-        self.screen.blit(msg, msg.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 90)))
-
-        # Nút Save & Quit
-        self.draw_rounded(self.screen, self.btn_save_quit, (237, 204, 97))
-        txt = self.font_button.render("Save & Quit", True, (255, 255, 255))
-        self.screen.blit(txt, txt.get_rect(center=self.btn_save_quit.center))
-
-        # Nút Quit without Saving
-        self.draw_rounded(self.screen, self.btn_quit_nosave, (237, 97, 97))
-        txt = self.font_button.render("Quit without Saving", True, (255, 255, 255))
-        self.screen.blit(txt, txt.get_rect(center=self.btn_quit_nosave.center))
-
-        # Nút Cancel
-        self.draw_rounded(self.screen, self.btn_cancel_exit, (119, 110, 101))
-        txt = self.font_button.render("Cancel", True, (255, 255, 255))
-        self.screen.blit(txt, txt.get_rect(center=self.btn_cancel_exit.center))
-
-    # --- Render Popup xác nhận ghi đè ---
-    def render_overwrite_confirm(self):
-        if not self.show_overwrite_confirm: return
-        
-        # Nền mờ
-        s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-        s.fill((0, 0, 0, 150))
-        self.screen.blit(s, (0, 0))
-
-        # Khung thoại
-        box_rect = pygame.Rect(WINDOW_WIDTH//2 - 180, WINDOW_HEIGHT//2 - 100, 360, 200)
-        pygame.draw.rect(self.screen, (250, 248, 239), box_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (119, 110, 101), box_rect, width=3, border_radius=10)
-
-        # Tiêu đề
-        msg1 = self.font_button.render(f"File '{self.player_nickname}' exists.", True, (119, 110, 101))
-        msg2 = self.font_button.render("Overwrite it?", True, (119, 110, 101))
-        self.screen.blit(msg1, msg1.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 60)))
-        self.screen.blit(msg2, msg2.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 30)))
-
-        # Nút Overwrite
-        self.draw_rounded(self.screen, self.btn_overwrite, (237, 204, 97))
-        txt = self.font_button.render("Yes", True, (255, 255, 255))
-        self.screen.blit(txt, txt.get_rect(center=self.btn_overwrite.center))
-
-        # Nút Cancel
-        self.draw_rounded(self.screen, self.btn_cancel_save, (119, 110, 101))
-        txt = self.font_button.render("No", True, (255, 255, 255))
-        self.screen.blit(txt, txt.get_rect(center=self.btn_cancel_save.center))
-
-    def render(self):
-        self.screen.fill(BACKGROUND_COLOR)
-        self.render_header()
-        self.render_instructions()
-        self.render_board()
-        self.render_game_over()
-        
-        # Vẽ popup
-        if self.show_exit_confirm:
-            self.render_exit_confirm()
-        elif self.show_overwrite_confirm:
-            self.render_overwrite_confirm()
+                self.env.update_top_score(int(f.read().strip()))
+        except: pass
 
     def handle_event(self, event):
-        from game.scenes.intro import IntroScreen 
-
-        # --- 1. Xử lý Popup Xác nhận Thoát ---
-        if self.show_exit_confirm:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                pos = event.pos
-                if self.btn_save_quit.collidepoint(pos):
-                    # Lưu rồi thoát (kiểm tra ghi đè)
-                    if self._check_save_and_overwrite_logic(quit_after=True):
-                        # Nếu lưu thành công ngay (ko cần ghi đè) -> tự thoát trong hàm check
-                        pass
-                
-                elif self.btn_quit_nosave.collidepoint(pos):
-                    self._save_top_score() 
-                    self.app.active_scene = IntroScreen(self.app)
-                
-                elif self.btn_cancel_exit.collidepoint(pos):
-                    self.show_exit_confirm = False
-            return
-
-        # --- 2. Xử lý Popup Xác nhận Ghi đè ---
-        if self.show_overwrite_confirm:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                pos = event.pos
-                if self.btn_overwrite.collidepoint(pos):
-                    self._perform_save_game()
-                    self.show_overwrite_confirm = False
-                    
-                    if getattr(self, 'pending_quit', False):
-                        self._save_top_score() 
-                        self.app.active_scene = IntroScreen(self.app)
-
-                elif self.btn_cancel_save.collidepoint(pos):
-                    self.show_overwrite_confirm = False
-                    self.pending_quit = False
-            return
-
-        # --- 3. Xử lý Game Over ---
-        if self.game_over:
+        # 1. Xử lý nhập tên file
+        if self.mode == 'INPUT_NAME':
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    self.reset_game()
-                elif event.key == pygame.K_q:
-                    self.app.active_scene = IntroScreen(self.app)
-            
+                if event.key == pygame.K_RETURN:
+                    self._check_filename()
+                elif event.key == pygame.K_BACKSPACE:
+                    self.save_name = self.save_name[:-1]
+                elif event.key == pygame.K_ESCAPE:
+                    self.mode = 'PLAY'
+                else:
+                    if len(self.save_name) < 15: self.save_name += event.unicode
+            return
+
+        # 2. Xử lý Popup Confirm (Overwrite / Exit)
+        if self.mode in ['CONFIRM_OVERWRITE', 'EXIT_CONFIRM']:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = event.pos
+                # Nút Trái (Ghi đè / Có thoát)
+                if self.btn_confirm_1.collidepoint(pos):
+                    if self.mode == 'CONFIRM_OVERWRITE':
+                        self._do_save(overwrite=True)
+                    elif self.mode == 'EXIT_CONFIRM':
+                        from game.scenes.intro import IntroScreen
+                        self.app.active_scene = IntroScreen(self.app)
+                
+                # Nút Phải (Đổi tên / Không thoát)
+                elif self.btn_confirm_2.collidepoint(pos):
+                    if self.mode == 'CONFIRM_OVERWRITE':
+                        self.mode = 'INPUT_NAME' # Quay lại nhập tên
+                    elif self.mode == 'EXIT_CONFIRM':
+                        self.mode = 'PLAY'
+            return
+        
+        # 3. Xử lý Game Over
+        if self.game_over:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.replay_rect.collidepoint(event.pos):
-                    self.reset_game()
+                    self.env.reset()
+                    self.start_time = time.time()
+                    self.game_over = False
                 elif self.quit_rect.collidepoint(event.pos):
+                    from game.scenes.intro import IntroScreen
                     self.app.active_scene = IntroScreen(self.app)
             return
 
-        # --- 4. Xử lý Chơi Game ---
+        # 4. Xử lý chơi game bình thường
         if event.type == pygame.KEYDOWN:
-            current_time = pygame.time.get_ticks()
-
-            if event.key == pygame.K_r:
-                self.reset_game()
-            
-            elif event.key == pygame.K_s:
+            if event.key == pygame.K_s: # Bật popup lưu
+                self.mode = 'INPUT_NAME'
+                self.save_name = ""
                 self.pending_quit = False
-                self._check_save_and_overwrite_logic()
-
-            elif event.key == pygame.K_q:
-                self.show_exit_confirm = True
-
-            elif event.key in KEY_TO_ACTION:
-                if current_time - self.last_move_time < self.move_delay:
-                    return 
-                
-                action = KEY_TO_ACTION[event.key]
-                self._perform_move(action)
-                self.last_move_time = current_time
-
-    def _check_save_and_overwrite_logic(self, quit_after=False):
-        """Kiểm tra xem file đã tồn tại chưa để hiện popup cảnh báo"""
-        filename = f"{self.player_nickname}.json"
-        
-        if os.path.exists(filename):
-            self.show_exit_confirm = False 
-            self.show_overwrite_confirm = True
-            self.pending_quit = quit_after 
-            return False 
-        else:
-            self._perform_save_game()
-            if quit_after:
-                self._save_top_score() 
-                # Trick để import cục bộ và chuyển cảnh
-                self.app.active_scene = self.app.active_scene.__class__(self.env, self.app)
-                from game.scenes.intro import IntroScreen 
-                self.app.active_scene = IntroScreen(self.app)
-            return True
-
-    def _perform_move(self, action):
-        s, r, d, info = self.env.step(action)
-        if info.get('moved', True):
-            self.state = s
-            current_score = self.get_current_max_tile_score()
-            if current_score > self.top_score:
-                self.top_score = current_score
             
-            if d: 
-                self.game_over = True
-                self.env.total_time += time.time() - self.start_time
-                self._save_top_score()
+            elif event.key == pygame.K_q: # Hỏi thoát
+                self.mode = 'EXIT_CONFIRM'
+            
+            elif event.key == pygame.K_r: # Replay
+                self.env.reset()
+                self.start_time = time.time()
+                self.game_over = False
 
-    def reset_game(self):
-        self.state = self.env.reset()
-        self.game_over = False
-        self._load_top_score()
+            elif not self.game_over and event.key in KEY_TO_ACTION:
+                # Anti-spam logic
+                curr = pygame.time.get_ticks()
+                if curr - self.last_move_time > self.move_delay:
+                    self._move(KEY_TO_ACTION[event.key])
+                    self.last_move_time = curr
+
+    def _check_filename(self):
+        if not self.save_name.strip(): return
+        fname = self.save_name + ".json"
+        if os.path.exists(fname):
+            self.mode = 'CONFIRM_OVERWRITE'
+        else:
+            self._do_save()
+
+    def _do_save(self, overwrite=False):
+        self.env.total_time += time.time() - self.start_time
         self.start_time = time.time()
-        self.env.total_time = 0
+        try:
+            self.env.save_game(self.save_name, ai_mode=self.app.ai_mode)
+            print(f"Saved {self.save_name}!")
+            self.mode = 'PLAY'
+            # Nếu lệnh lưu đến từ việc muốn thoát game (Save & Quit - tính năng mở rộng)
+            # Hiện tại ta chưa có nút Save & Quit riêng, nhưng logic này giúp mở rộng sau này
+            if self.pending_quit:
+                from game.scenes.intro import IntroScreen
+                self.app.active_scene = IntroScreen(self.app)
+        except Exception as e:
+            print("Save error:", e)
+
+    def _move(self, action):
+        s, r, d, info = self.env.step(action)
+        if info.get('moved'):
+            self.state = s
+            curr_max = self.env.get_score()
+            if curr_max > self.top_score:
+                self.top_score = curr_max
+                with open(TOP_SCORE_FILE, 'w') as f: f.write(str(self.top_score))
+            if d: self.game_over = True
 
     def update(self, dt):
         pass
+
+    # --- RENDER ---
+    def render(self):
+        self.screen.fill(BACKGROUND_COLOR)
+        self.render_header()
+        self.render_board()
+        
+        # Vẽ Popup đè lên nếu có
+        if self.mode != 'PLAY':
+            self._render_popup()
+        elif self.game_over:
+            self._render_gameover()
+
+    def _render_popup(self):
+        # Dim background
+        s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        s.fill((0,0,0,150))
+        self.screen.blit(s, (0,0))
+        
+        # Box
+        pygame.draw.rect(self.screen, (250, 248, 239), self.popup_rect, border_radius=10)
+        pygame.draw.rect(self.screen, TEXT_COLOR, self.popup_rect, width=3, border_radius=10)
+        
+        txt = TEXTS[self.app.lang]
+        
+        if self.mode == 'INPUT_NAME':
+            title = self.font_popup.render(txt['save_title'], True, TEXT_COLOR)
+            self.screen.blit(title, (self.popup_rect.centerx - title.get_width()//2, self.popup_rect.top + 20))
+            
+            sub = self.font_popup.render(txt['enter_name'], True, TEXT_COLOR)
+            self.screen.blit(sub, (self.popup_rect.centerx - sub.get_width()//2, self.popup_rect.top + 60))
+            
+            pygame.draw.rect(self.screen, (255,255,255), self.input_rect, border_radius=5)
+            pygame.draw.rect(self.screen, TEXT_COLOR, self.input_rect, width=2, border_radius=5)
+            
+            name_surf = self.font_popup.render(self.save_name, True, (0,0,0))
+            self.screen.blit(name_surf, (self.input_rect.x + 10, self.input_rect.centery - name_surf.get_height()//2))
+            
+            hint = self.font_popup.render("(Enter to Save)", True, (150,150,150))
+            self.screen.blit(hint, (self.popup_rect.centerx - hint.get_width()//2, self.popup_rect.bottom - 30))
+
+        elif self.mode == 'CONFIRM_OVERWRITE':
+            msg1 = self.font_popup.render(txt['overwrite_msg'], True, TEXT_COLOR)
+            msg2 = self.font_popup.render(txt['overwrite_ask'], True, TEXT_COLOR)
+            self.screen.blit(msg1, msg1.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 40)))
+            self.screen.blit(msg2, msg2.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 10)))
+            
+            self._draw_btn(self.btn_confirm_1, txt['btn_overwrite'], (240, 100, 100))
+            self._draw_btn(self.btn_confirm_2, txt['btn_rename'], (100, 200, 100))
+
+        elif self.mode == 'EXIT_CONFIRM':
+            msg = self.font_popup.render(txt['ask_exit'], True, TEXT_COLOR)
+            self.screen.blit(msg, msg.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 30)))
+            self._draw_btn(self.btn_confirm_1, txt['yes'], (200, 80, 80))
+            self._draw_btn(self.btn_confirm_2, txt['no'], (100, 200, 100))
+
+    def _draw_btn(self, rect, text, color):
+        pygame.draw.rect(self.screen, color, rect, border_radius=8)
+        t = self.font_popup.render(text, True, (255,255,255))
+        self.screen.blit(t, t.get_rect(center=rect.center))
+
+    def render_header(self):
+        txt = TEXTS[self.app.lang]
+        score = self.env.get_score()
+        
+        # Vẽ điểm số góc phải
+        pygame.draw.rect(self.screen, SCORE_BG_COLOR, (WINDOW_WIDTH-180, 40, 160, 60), border_radius=5)
+        lbl = self.font_popup.render(f"{txt['score']}: {score}", True, (255,255,255))
+        self.screen.blit(lbl, (WINDOW_WIDTH-170, 55))
+        
+        # Vẽ Top Score (nếu muốn)
+        # ...
+
+    def render_board(self):
+        pygame.draw.rect(self.screen, BOARD_BG_COLOR, self.board_rect, border_radius=10)
+        for r in range(GRID_SIZE):
+            for c in range(GRID_SIZE):
+                x = self.board_rect.x + TILE_GAP + c*(self.tile_size+TILE_GAP)
+                y = self.board_rect.y + TILE_GAP + r*(self.tile_size+TILE_GAP)
+                val = self.state[r][c]
+                color = TILE_COLORS.get(val, DEFAULT_LARGE_TILE_COLOR)
+                pygame.draw.rect(self.screen, color, (x,y,self.tile_size,self.tile_size), border_radius=TILE_RADIUS)
+                if val:
+                    t = self.font_tile.render(str(val), True, (0,0,0) if val<=4 else (255,255,255))
+                    self.screen.blit(t, t.get_rect(center=(x+self.tile_size//2, y+self.tile_size//2)))
+
+    def _render_gameover(self):
+        s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        s.fill((0,0,0,128))
+        self.screen.blit(s, (0,0))
+        
+        txt = TEXTS[self.app.lang]
+        t = self.font_tile.render(txt['game_over'], True, (255,0,0))
+        self.screen.blit(t, t.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 60)))
+        
+        # Nút Replay / Menu
+        self._draw_btn(self.replay_rect, "REPLAY", (237, 204, 97))
+        self._draw_btn(self.quit_rect, "MENU", (237, 204, 97))
