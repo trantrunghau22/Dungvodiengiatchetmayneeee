@@ -51,7 +51,7 @@ class BoardScene:
         self.save_name = ""
         self.pending_quit = False
         
-        # --- LAYOUT ---
+        # --- LAYOUT (CENTERED) ---
         cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
         
         # Nút chức năng
@@ -61,17 +61,26 @@ class BoardScene:
         self.btn_set   = pygame.Rect(BOARD_MARGIN_LEFT + 180, btn_y, 80, 40)
         self.btn_menu  = pygame.Rect(BOARD_MARGIN_LEFT + 270, btn_y, 80, 40)
 
-        # Popup Save/Exit
-        self.popup_rect = pygame.Rect(cx - 200, cy - 100, 400, 200)
-        self.input_rect = pygame.Rect(cx - 150, cy, 300, 40)
-        self.btn_confirm_1 = pygame.Rect(cx - 110, cy + 60, 100, 40)
-        self.btn_confirm_2 = pygame.Rect(cx + 10, cy + 60, 100, 40)
+        # Popup Save/Exit - Căn giữa
+        popup_w, popup_h = 400, 200
+        self.popup_rect = pygame.Rect(cx - popup_w//2, cy - popup_h//2, popup_w, popup_h)
         
-        # Popup Setting (Trong game)
-        self.setting_rect = pygame.Rect(cx - 150, cy - 100, 300, 200)
-        self.btn_set_lang = pygame.Rect(cx - 60, cy - 30, 120, 40)
+        # Các nút trong popup cũng căn theo center của popup
+        p_cx = self.popup_rect.centerx
+        p_cy = self.popup_rect.centery
+        
+        self.input_rect = pygame.Rect(p_cx - 150, p_cy, 300, 40)
+        self.btn_confirm_1 = pygame.Rect(p_cx - 110, p_cy + 50, 100, 40)
+        self.btn_confirm_2 = pygame.Rect(p_cx + 10, p_cy + 50, 100, 40)
+        
+        # Popup Setting (Trong game) - Căn giữa
+        set_w, set_h = 300, 200
+        self.setting_rect = pygame.Rect(cx - set_w//2, cy - set_h//2, set_w, set_h)
+        s_cx, s_cy = self.setting_rect.centerx, self.setting_rect.centery
+        
+        self.btn_set_lang = pygame.Rect(s_cx - 60, s_cy - 30, 120, 40)
         # [UPDATE] Nút âm thanh rộng hơn
-        self.btn_set_sound = pygame.Rect(cx - 80, cy + 30, 160, 40)
+        self.btn_set_sound = pygame.Rect(s_cx - 80, s_cy + 30, 160, 40)
         
         # Game Over Buttons
         self.replay_rect = pygame.Rect(cx - 120, cy + 50, 100, 50)
@@ -317,8 +326,8 @@ class BoardScene:
         elif self.mode == 'CONFIRM_OVERWRITE':
             msg1 = self.font_popup.render(txt['overwrite_msg'], True, TEXT_COLOR)
             msg2 = self.font_popup.render(txt['overwrite_ask'], True, TEXT_COLOR)
-            self.screen.blit(msg1, msg1.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 40)))
-            self.screen.blit(msg2, msg2.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 10)))
+            self.screen.blit(msg1, msg1.get_rect(center=(self.popup_rect.centerx, self.popup_rect.centery - 20)))
+            self.screen.blit(msg2, msg2.get_rect(center=(self.popup_rect.centerx, self.popup_rect.centery + 10)))
             
             self._draw_btn_small(self.btn_confirm_1, txt['btn_overwrite'], (240, 100, 100))
             self._draw_btn_small(self.btn_confirm_2, txt['btn_rename'], (100, 200, 100))
@@ -326,8 +335,8 @@ class BoardScene:
         elif self.mode == 'EXIT_CONFIRM':
             msg = self.font_popup.render("Chưa lưu game!", True, TEXT_COLOR)
             sub = self.font_popup.render("Bạn muốn lưu trước khi thoát?", True, TEXT_COLOR)
-            self.screen.blit(msg, msg.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 50)))
-            self.screen.blit(sub, sub.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 - 20)))
+            self.screen.blit(msg, msg.get_rect(center=(self.popup_rect.centerx, self.popup_rect.centery - 20)))
+            self.screen.blit(sub, sub.get_rect(center=(self.popup_rect.centerx, self.popup_rect.centery + 10)))
             self._draw_btn_small(self.btn_confirm_1, txt['yes'], (100, 200, 100))
             self._draw_btn_small(self.btn_confirm_2, txt['no'], (200, 80, 80))
 
