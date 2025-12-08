@@ -1,257 +1,274 @@
 import pygame
 import os
-import time
-import json 
+import json
 from game.scenes.board import BoardScene
 from game.core.env_2048 import Game2048Env
-from game.settings import GRID_SIZE, WINDOW_WIDTH, WINDOW_HEIGHT
+from game.settings import *
 
 class IntroScreen:
     def __init__(self, app):
         self.app = app
         self.window = app.window
+        self._load_assets()
         
-        try:
-            self.font_title = pygame.font.SysFont("comicsansms", 140, bold=True)
-            self.font_small = pygame.font.SysFont("comicsansms", 32, bold=True)
-            self.font_input = pygame.font.SysFont("comicsansms", 28)
-            self.font_list  = pygame.font.SysFont("arial", 24) 
-        except:
-            self.font_title = pygame.font.SysFont("arial", 100, bold=True)
-            self.font_small = pygame.font.SysFont("arial", 32, bold=True)
-            self.font_input = pygame.font.SysFont("arial", 28)
-            self.font_list  = pygame.font.SysFont("arial", 24)
-
-        self.button_start = pygame.Rect(240, 420, 300, 60)
-        self.button_ai = pygame.Rect(240, 500, 300, 60)
-        self.button_load = pygame.Rect(240, 580, 300, 60)
-
-        self.username = getattr(self.app, 'username', "")
-        self.input_active = False
-        self.input_box = pygame.Rect(200, 320, 400, 50)
-        self.color_active = (243, 178, 122)
-        self.color_inactive = (187, 173, 160)
-        self.input_color = self.color_inactive
-
-        self.show_load_list = False 
-        self.saved_files = [] 
-        self.file_rects = []   
-        self.del_file_rects = [] 
+        # --- Layout Buttons (2 cột, 3 hàng) ---
+        cx = WINDOW_WIDTH // 2
+        cy = WINDOW_HEIGHT // 2 + 50
+        w, h = 180, 50
+        gap = 20
         
-        self.list_bg_rect = pygame.Rect(100, 150, 600, 500)
-        self.btn_close_list = pygame.Rect(550, 160, 140, 40)
+        # Cột 1
+        self.btn_new = pygame.Rect(cx - w - gap, cy - h - gap, w, h)
+        self.btn_load = pygame.Rect(cx - w - gap, cy, w, h)
+        self.btn_setting = pygame.Rect(cx - w - gap, cy + h + gap, w, h)
+        
+        # Cột 2
+        self.btn_credit = pygame.Rect(cx + gap, cy - h - gap, w, h)
+        self.btn_tutorial = pygame.Rect(cx + gap, cy, w, h)
+        self.btn_exit = pygame.Rect(cx + gap, cy + h + gap, w, h)
 
-    def _scan_saved_files(self):
-        files_data = []
-        try:
-            all_files = os.listdir('.')
-            for f in all_files:
-                if f.endswith('.json'):
-                    mode_str = "Normal"
-                    try:
-                        with open(f, 'r', encoding='utf-8') as fp:
-                            data = json.load(fp)
-                            if data.get('ai_mode', False):
-                                mode_str = "AI"
-                    except:
-                        pass 
-                    
-                    files_data.append({
-                        'filename': f,
-                        'mtime': os.path.getmtime(f),
-                        'mode': mode_str
-                    })
-            
-            files_data.sort(key=lambda x: x['mtime'], reverse=True)
-            self.saved_files = files_data
-            
-        except Exception as e:
-            print("Error scanning files:", e)
+        # --- Trạng thái Modal ---
+        self.modal = None # 'NEW_GAME', 'LOAD', 'SETTING', 'TUTORIAL', 'CREDIT', 'EXIT'
+        self.saved_files = []
+        self.file_rects = []
+        self.del_file_rects = []
+        
+        self.modal_rect = pygame.Rect(150, 150, 500, 350)
+        self.btn_close = pygame.Rect(self.modal_rect.right - 40, self.modal_rect.top + 10, 30, 30)
+
+    def _load_assets(self):
+        # Font load logic (giữ nguyên để tránh lỗi)
+        self.font_title = pygame.font.SysFont("arial", 80, bold=True)
+        self.font_btn = pygame.font.SysFont("arial", 24, bold=True)
+        self.font_small = pygame.font.SysFont("arial", 20)
+        
+        # Thử load font custom nếu có
+        fpath = os.path.join(FONT_DIR, 'shin_font.ttf')
+        if os.path.exists(fpath):
+            self.font_title = pygame.font.Font(fpath, 80)
+            self.font_btn = pygame.font.Font(fpath, 26)
+            self.font_small = pygame.font.Font(fpath, 22)
 
     def handle_event(self, event):
-        if self.show_load_list:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = event.pos
-                
-                if self.btn_close_list.collidepoint(mouse_pos):
-                    self.show_load_list = False
-                    return
-
-                for i, del_rect in enumerate(self.del_file_rects):
-                    if del_rect.collidepoint(mouse_pos):
-                        file_to_delete = self.saved_files[i]['filename']
-                        try:
-                            os.remove(file_to_delete)
-                            print(f"Deleted file: {file_to_delete}")
-                            self._scan_saved_files()
-                        except Exception as e:
-                            print(f"Error deleting file: {e}")
-                        return 
-
-                for i, rect in enumerate(self.file_rects):
-                    if rect.collidepoint(mouse_pos):
-                        file_info = self.saved_files[i]
-                        is_ai = True if file_info['mode'] == "AI" else False
-                        self._load_selected_file(file_info['filename'], is_ai)
-                        return
+        # Nếu đang mở Modal -> Xử lý riêng
+        if self.modal:
+            self._handle_modal_event(event)
             return
-        
+
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.input_box.collidepoint(event.pos):
-                self.input_active = True
-                self.input_color = self.color_active
-            else:
-                self.input_active = False
-                self.input_color = self.color_inactive
+            pos = event.pos
+            if self.btn_new.collidepoint(pos): self.modal = 'NEW_GAME'
+            elif self.btn_load.collidepoint(pos): 
+                self._scan_files()
+                self.modal = 'LOAD'
+            elif self.btn_tutorial.collidepoint(pos): self.modal = 'TUTORIAL'
+            elif self.btn_credit.collidepoint(pos): self.modal = 'CREDIT'
+            elif self.btn_setting.collidepoint(pos): self.modal = 'SETTING'
+            elif self.btn_exit.collidepoint(pos): self.modal = 'EXIT'
 
-            if self.button_start.collidepoint(event.pos):
-                self._start_game(ai_mode=False)
-
-            if self.button_ai.collidepoint(event.pos):
-                self._start_game(ai_mode=True)
-
-            if self.button_load.collidepoint(event.pos):
-                self._scan_saved_files()
-                self.show_load_list = True
-
-        if event.type == pygame.KEYDOWN:
-            if self.input_active:
-                if event.key == pygame.K_RETURN:
-                    self._start_game(ai_mode=False)
-                elif event.key == pygame.K_BACKSPACE:
-                    self.username = self.username[:-1]
-                else:
-                    if len(self.username) < 12:
-                        self.username += event.unicode
-
-    def _start_game(self, ai_mode=False):
-        if self.username.strip() == "":
-            print("Username required!")
-            return
+    def _handle_modal_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = event.pos
             
-        self.app.username = self.username
-        self.app.ai_mode = ai_mode
-        
-        new_env = Game2048Env(size=GRID_SIZE)
-        new_env.reset()
-        self.app.active_scene = BoardScene(new_env, self.app)
+            # Nút Close chung cho mọi modal (trừ Exit)
+            if self.modal != 'EXIT' and self.btn_close.collidepoint(pos):
+                self.modal = None
+                return
 
-    def _load_selected_file(self, filename, ai_mode):
-        print(f"Loading file: {filename} (Mode: {'AI' if ai_mode else 'Normal'})")
-        
-        if not os.path.exists(filename):
-            print("File not found!")
-            return
+            # --- Logic riêng từng modal ---
+            if self.modal == 'NEW_GAME':
+                # Vẽ 2 nút: Start Normal & AI Mode
+                btn_normal = pygame.Rect(self.modal_rect.centerx - 100, self.modal_rect.centery - 40, 200, 50)
+                btn_ai = pygame.Rect(self.modal_rect.centerx - 100, self.modal_rect.centery + 30, 200, 50)
+                
+                if btn_normal.collidepoint(pos):
+                    self._start_game(ai=False)
+                elif btn_ai.collidepoint(pos):
+                    self._start_game(ai=True)
 
+            elif self.modal == 'SETTING':
+                # Nút Language
+                btn_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 100, 40)
+                # Nút Sound
+                btn_sound = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 100, 40)
+                
+                if btn_lang.collidepoint(pos):
+                    self.app.lang = 'EN' if self.app.lang == 'VI' else 'VI'
+                elif btn_sound.collidepoint(pos):
+                    self.app.sound_on = not self.app.sound_on
+
+            elif self.modal == 'EXIT':
+                btn_yes = pygame.Rect(self.modal_rect.centerx - 110, self.modal_rect.bottom - 80, 100, 40)
+                btn_no = pygame.Rect(self.modal_rect.centerx + 10, self.modal_rect.bottom - 80, 100, 40)
+                if btn_yes.collidepoint(pos):
+                    pygame.quit(); exit()
+                elif btn_no.collidepoint(pos):
+                    self.modal = None
+
+            elif self.modal == 'LOAD':
+                # Check nút xóa file
+                for i, r in enumerate(self.del_file_rects):
+                    if r.collidepoint(pos):
+                        try:
+                            os.remove(self.saved_files[i]['filename'])
+                            self._scan_files()
+                        except: pass
+                        return
+                # Check chọn file
+                for i, r in enumerate(self.file_rects):
+                    if r.collidepoint(pos):
+                        f = self.saved_files[i]
+                        is_ai = (f['mode'] == 'AI')
+                        self._load_game(f['filename'], is_ai)
+
+    def _start_game(self, ai):
+        self.app.ai_mode = ai
+        # Reset env
         env = Game2048Env(size=GRID_SIZE)
-        try:
-            env.load_game(filename)
-            print("Loaded successfully!")
-        except Exception as e:
-            print("Error loading game:", e)
-            return
-
-        if self.username.strip() == "":
-            base_name = filename.replace(".json", "") 
-            self.app.username = base_name
-        else:
-            self.app.username = self.username
-
-        self.app.ai_mode = ai_mode 
+        env.reset()
         self.app.active_scene = BoardScene(env, self.app)
 
+    def _load_game(self, fname, ai):
+        if not os.path.exists(fname): return
+        env = Game2048Env(size=GRID_SIZE)
+        try:
+            env.load_game(fname)
+            self.app.ai_mode = ai
+            self.app.active_scene = BoardScene(env, self.app)
+        except: pass
+
+    def _scan_files(self):
+        self.saved_files = []
+        try:
+            for f in os.listdir('.'):
+                if f.endswith('.json'):
+                    mode = "Normal"
+                    try:
+                        with open(f, 'r', encoding='utf-8') as fp:
+                            d = json.load(fp)
+                            if d.get('ai_mode'): mode = "AI"
+                    except: pass
+                    self.saved_files.append({'filename': f, 'mtime': os.path.getmtime(f), 'mode': mode})
+            self.saved_files.sort(key=lambda x: x['mtime'], reverse=True)
+        except: pass
+
     def render(self):
-        self.window.fill((250, 248, 239))
-
-        title = self.font_title.render("2048", True, (243, 178, 122))
-        self.window.blit(title, (190, 150))
-
-        label = self.font_small.render("Enter username:", True, (119, 110, 101))
-        self.window.blit(label, (200, 280))
-
-        pygame.draw.rect(self.window, self.input_color, self.input_box, border_radius=10)
-        text_surface = self.font_input.render(self.username, True, (0, 0, 0))
-        self.window.blit(text_surface, (self.input_box.x+10, self.input_box.y+10))
-
-        self._draw_button(self.button_start, "START")
-        self._draw_button(self.button_ai, "AI MODE")
-        self._draw_button(self.button_load, "LOAD GAME")
-
-        if self.show_load_list:
-            self._render_load_list()
-
-    def _render_load_list(self):
-        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 180))
-        self.window.blit(overlay, (0, 0))
-
-        pygame.draw.rect(self.window, (250, 248, 239), self.list_bg_rect, border_radius=15)
-        pygame.draw.rect(self.window, (187, 173, 160), self.list_bg_rect, width=4, border_radius=15)
-
-        title_surf = self.font_small.render("Select Saved Game", True, (119, 110, 101))
-        self.window.blit(title_surf, (self.list_bg_rect.x + 20, self.list_bg_rect.y + 20))
-
-        mouse_pos = pygame.mouse.get_pos()
-        close_color = (243, 178, 122) if self.btn_close_list.collidepoint(mouse_pos) else (187, 173, 160)
-        pygame.draw.rect(self.window, close_color, self.btn_close_list, border_radius=8)
-        close_txt = self.font_input.render("Close", True, (255, 255, 255))
-        self.window.blit(close_txt, close_txt.get_rect(center=self.btn_close_list.center))
-
-        self.file_rects = []   
-        self.del_file_rects = [] 
-       
-        start_y = self.list_bg_rect.y + 80
+        self.window.fill(BACKGROUND_COLOR)
         
-        if not self.saved_files:
-            # [FIXED] Đã xóa chữ "(.json)" thừa
-            empty_txt = self.font_list.render("No saved files found", True, (150, 150, 150))
-            self.window.blit(empty_txt, (self.list_bg_rect.x + 40, start_y))
-        else:
-            for i, file_data in enumerate(self.saved_files[:8]):
-                filename = file_data['filename']
-                mode = file_data['mode']
-                
-                item_rect = pygame.Rect(self.list_bg_rect.x + 20, start_y + i*50, 560, 40)
-                self.file_rects.append(item_rect)
+        # Title
+        title = self.font_title.render("2048 SHIN", True, (243, 178, 122))
+        self.window.blit(title, title.get_rect(center=(WINDOW_WIDTH//2, 150)))
 
-                is_hovered = item_rect.collidepoint(mouse_pos)
-                if is_hovered:
-                    pygame.draw.rect(self.window, (238, 228, 218), item_rect, border_radius=5)
-                    text_color = (243, 178, 122)
-                else:
-                    text_color = (119, 110, 101)
+        txt = TEXTS[self.app.lang]
 
-                clean_name = filename.replace(".json", "")
-                display_str = f"{i+1}. {clean_name} ({mode})"
-                
-                if len(display_str) > 35:
-                    display_str = display_str[:32] + "..."
-                
-                txt_surf = self.font_list.render(display_str, True, text_color)
-                txt_rect = txt_surf.get_rect(midleft=(item_rect.x + 10, item_rect.centery))
-                self.window.blit(txt_surf, txt_rect)
-                
-                del_btn_rect = pygame.Rect(item_rect.right - 40, item_rect.y + 5, 30, 30)
-                self.del_file_rects.append(del_btn_rect)
-                
-                if del_btn_rect.collidepoint(mouse_pos):
-                    del_color = (255, 100, 100)
-                else:
-                    del_color = (200, 200, 200)
-                
-                pygame.draw.rect(self.window, del_color, del_btn_rect, border_radius=5)
-                
-                x_surf = self.font_list.render("X", True, (255, 255, 255))
-                x_rect = x_surf.get_rect(center=del_btn_rect.center)
-                self.window.blit(x_surf, x_rect)
+        # Draw 6 buttons
+        buttons = [
+            (self.btn_new, txt['new_game']), (self.btn_load, txt['load_game']),
+            (self.btn_setting, txt['setting']), (self.btn_credit, txt['credit']),
+            (self.btn_tutorial, txt['tutorial']), (self.btn_exit, txt['exit'])
+        ]
+        for rect, label in buttons:
+            self._draw_btn(rect, label)
 
-    def _draw_button(self, rect, text):
-        mouse = pygame.mouse.get_pos()
-        color = (243, 178, 122) if rect.collidepoint(mouse) else (246, 150, 101)
-        pygame.draw.rect(self.window, color, rect, border_radius=12)
-        text_surf = self.font_small.render(text, True, (250, 248, 239))
-        text_rect = text_surf.get_rect(center=rect.center)
-        self.window.blit(text_surf, text_rect)
+        # Draw Modal
+        if self.modal:
+            self._render_modal()
 
-    def update(self, dt): 
-        pass
+    def _render_modal(self):
+        # Dim background
+        s = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        s.fill((0,0,0,150))
+        self.window.blit(s, (0,0))
+        
+        # Modal Box
+        pygame.draw.rect(self.window, (250, 248, 239), self.modal_rect, border_radius=15)
+        pygame.draw.rect(self.window, TEXT_COLOR, self.modal_rect, width=3, border_radius=15)
+        
+        txt = TEXTS[self.app.lang]
+
+        # Close button (trừ Exit)
+        if self.modal != 'EXIT':
+            pygame.draw.rect(self.window, (200, 50, 50), self.btn_close, border_radius=5)
+            x_txt = self.font_btn.render("X", True, (255,255,255))
+            self.window.blit(x_txt, x_txt.get_rect(center=self.btn_close.center))
+
+        # Content
+        if self.modal == 'NEW_GAME':
+            b1 = pygame.Rect(self.modal_rect.centerx - 100, self.modal_rect.centery - 40, 200, 50)
+            b2 = pygame.Rect(self.modal_rect.centerx - 100, self.modal_rect.centery + 30, 200, 50)
+            self._draw_btn(b1, txt['start_normal'], (237, 204, 97))
+            self._draw_btn(b2, txt['start_ai'], (237, 150, 97))
+
+        elif self.modal == 'EXIT':
+            msg = self.font_btn.render(txt['ask_exit'], True, TEXT_COLOR)
+            self.window.blit(msg, msg.get_rect(center=(self.modal_rect.centerx, self.modal_rect.top + 80)))
+            b1 = pygame.Rect(self.modal_rect.centerx - 110, self.modal_rect.bottom - 100, 100, 40)
+            b2 = pygame.Rect(self.modal_rect.centerx + 10, self.modal_rect.bottom - 100, 100, 40)
+            self._draw_btn(b1, txt['yes'], (200, 80, 80))
+            self._draw_btn(b2, txt['no'], (100, 200, 100))
+
+        elif self.modal == 'SETTING':
+            # Label
+            lbl_lang = self.font_btn.render(txt['lang'], True, TEXT_COLOR)
+            lbl_snd = self.font_btn.render(txt['sound'], True, TEXT_COLOR)
+            self.window.blit(lbl_lang, (self.modal_rect.x + 50, self.modal_rect.top + 90))
+            self.window.blit(lbl_snd, (self.modal_rect.x + 50, self.modal_rect.top + 150))
+            
+            # Value Btns
+            b_lang = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 80, 120, 40)
+            b_snd = pygame.Rect(self.modal_rect.centerx + 20, self.modal_rect.top + 140, 120, 40)
+            
+            val_lang = "TIẾNG VIỆT" if self.app.lang == 'VI' else "ENGLISH"
+            val_snd = txt['on'] if self.app.sound_on else txt['off']
+            
+            self._draw_btn(b_lang, val_lang, (200, 200, 200))
+            self._draw_btn(b_snd, val_snd, (200, 200, 200))
+
+        elif self.modal == 'TUTORIAL':
+            y = self.modal_rect.top + 50
+            for line in txt['tut_content']:
+                t = self.font_small.render(line, True, TEXT_COLOR)
+                self.window.blit(t, (self.modal_rect.x + 30, y))
+                y += 35
+
+        elif self.modal == 'CREDIT':
+            y = self.modal_rect.centery - 40
+            for line in txt['credit_content']:
+                t = self.font_btn.render(line, True, TEXT_COLOR)
+                self.window.blit(t, t.get_rect(center=(self.modal_rect.centerx, y)))
+                y += 40
+
+        elif self.modal == 'LOAD':
+            self.file_rects = []
+            self.del_file_rects = []
+            y = self.modal_rect.top + 50
+            
+            if not self.saved_files:
+                t = self.font_small.render("No files", True, (150,150,150))
+                self.window.blit(t, (self.modal_rect.x+50, y))
+            
+            for i, f in enumerate(self.saved_files[:5]): # Show max 5
+                rect = pygame.Rect(self.modal_rect.x+20, y + i*45, self.modal_rect.width-80, 40)
+                self.file_rects.append(rect)
+                
+                # Nút Xóa
+                d_rect = pygame.Rect(rect.right + 10, rect.y, 30, 40)
+                self.del_file_rects.append(d_rect)
+                
+                pygame.draw.rect(self.window, (240, 240, 240), rect, border_radius=5)
+                fname = f['filename'].replace('.json', '')
+                t = self.font_small.render(f"{fname} ({f['mode']})", True, TEXT_COLOR)
+                self.window.blit(t, (rect.x+10, rect.centery - t.get_height()//2))
+                
+                # Draw Del X
+                pygame.draw.rect(self.window, (200, 80, 80), d_rect, border_radius=5)
+                xt = self.font_small.render("X", True, (255,255,255))
+                self.window.blit(xt, xt.get_rect(center=d_rect.center))
+
+    def _draw_btn(self, rect, text, color=(246, 178, 107)):
+        pygame.draw.rect(self.window, color, rect, border_radius=10)
+        pygame.draw.rect(self.window, (100, 50, 0), rect, width=2, border_radius=10)
+        t = self.font_btn.render(text, True, (0,0,0))
+        self.window.blit(t, t.get_rect(center=rect.center))
+
+    def update(self, dt): pass
