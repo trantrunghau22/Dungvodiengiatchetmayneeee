@@ -1,20 +1,40 @@
 import os
+import pygame
 
-# --- Cấu hình Màn hình ---
+# --- Cấu hình Màn hình Cơ sở (Base Resolution) ---
+# Dùng hệ quy chiếu này để thiết kế, sau đó scale lên
+BASE_WIDTH = 800
+BASE_HEIGHT = 600
+
+# Khởi tạo pygame để lấy info màn hình (chỉ chạy 1 lần khi import)
+pygame.init()
+info = pygame.display.Info()
+SCREEN_WIDTH = info.current_w
+SCREEN_HEIGHT = info.current_h
+
+# Tính tỉ lệ scale (chọn tỉ lệ nhỏ hơn để fit màn hình)
+SCALE_X = SCREEN_WIDTH / BASE_WIDTH
+SCALE_Y = SCREEN_HEIGHT / BASE_HEIGHT
+SCALE = min(SCALE_X, SCALE_Y) * 0.9 # Nhân 0.9 để chừa chút lề nếu cần
+
+# Tính toán kích thước thực tế sau khi scale
+WINDOW_WIDTH = SCREEN_WIDTH
+WINDOW_HEIGHT = SCREEN_HEIGHT
+
+# Căn giữa nội dung game
+OFFSET_X = (WINDOW_WIDTH - (BASE_WIDTH * SCALE)) // 2
+OFFSET_Y = (WINDOW_HEIGHT - (BASE_HEIGHT * SCALE)) // 2
+
+# --- Cấu hình Game ---
 ROWS = 4
 COLS = 4
 GRID_SIZE = 4
 
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
-
-# --- Layout Bàn cờ ---
-BOARD_MARGIN_LEFT = 260  
-BOARD_MARGIN_TOP = 180
-TILE_SIZE = 80
-TILE_GAP = 10
-BOARD_WIDTH = (TILE_SIZE * GRID_SIZE) + (TILE_GAP * (GRID_SIZE + 1))
-BOARD_HEIGHT = BOARD_WIDTH 
+# Layout Bàn cờ (Hệ quy chiếu Base 800x600)
+BASE_TILE_SIZE = 80
+BASE_TILE_GAP = 10
+BASE_BOARD_WIDTH = (BASE_TILE_SIZE * GRID_SIZE) + (BASE_TILE_GAP * (GRID_SIZE + 1))
+BASE_BOARD_HEIGHT = BASE_BOARD_WIDTH 
 
 # --- Màu sắc ---
 BACKGROUND_COLOR = (255, 253, 208)
@@ -40,10 +60,17 @@ FONT_DIR = os.path.join(ASSETS_DIR, 'fonts')
 
 FONT_NAME = "comicsansms"
 FPS = 60
-TILE_RADIUS = 10
+TILE_RADIUS = int(10 * SCALE) # Scale bo góc
 TOP_SCORE_FILE = "top_score.txt"
 
-# --- TỪ ĐIỂN NGÔN NGỮ ---
+# Hàm helper để scale kích thước và tọa độ
+def s(value):
+    return int(value * SCALE)
+
+def s_rect(x, y, w, h):
+    return pygame.Rect(OFFSET_X + s(x), OFFSET_Y + s(y), s(w), s(h))
+
+# --- TỪ ĐIỂN NGÔN NGỮ (Giữ nguyên) ---
 TEXTS = {
     'VI': {
         'new_game': 'GAME MỚI', 'load_game': 'TẢI GAME', 'setting': 'CÀI ĐẶT',
@@ -64,13 +91,12 @@ TEXTS = {
             "- Bấm 'S' để lưu game, 'Q' để ra menu."
         ],
         'credit_content': [
-            "GAME 2048",
             "HCMUS - 25CTT3",
             "GROUP THỢ ĐIỆN VIẾT CODE",
-            
+            "GAME 2048",
             "Trần Trung Hậu - 25120188",
-            "Đào Khánh Băng - 25120162",
             "Vũ Gia Bảo - 25120168",
+            "Đào Khánh Băng - 25120162",
             "Phạm Hoàng Tường An - 25120159",
             "Ngô Bảo - 25120165",
             "Trần Phạm Đăng Duy - 25120138",
