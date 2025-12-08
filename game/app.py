@@ -9,15 +9,17 @@ class App:
         try: pygame.mixer.init()
         except: pass
         
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        # [UPDATE] Mở Fullscreen
+        # pygame.FULLSCREEN | pygame.SCALED giúp game tự co dãn để fit màn hình
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.FULLSCREEN | pygame.SCALED)
         self.window = self.screen
-        # [CẬP NHẬT] Đổi tên cửa sổ
+        
         pygame.display.set_caption("2048 - GROUP THỢ ĐIỆN VIẾT CODE")
         self.clock = pygame.time.Clock()
         self.running = True
         
         # Biến toàn cục
-        self.username = "" # Để trống để nhập ở intro
+        self.username = "" 
         self.ai_mode = False
         
         # Cài đặt (Settings)
@@ -42,8 +44,16 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                # [FEATURE] Bấm ESC ở màn hình chính để thoát (fallback)
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                     # Nếu đang ở intro mà bấm ESC thì thoát luôn cho tiện
+                     if isinstance(self.active_scene, IntroScreen):
+                         if self.active_scene.modal is None: # Chỉ thoát khi ko mở popup
+                             self.running = False
+                     # Các màn khác tự xử lý ESC
                 else:
                     self.active_scene.handle_event(event)
+            
             self.active_scene.update(dt)
             self.active_scene.render()
             pygame.display.flip()
