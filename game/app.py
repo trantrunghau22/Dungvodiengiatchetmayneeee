@@ -11,18 +11,19 @@ class App:
         
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.window = self.screen
-        pygame.display.set_caption("2048 - Shin Style")
+        # [CẬP NHẬT] Đổi tên cửa sổ
+        pygame.display.set_caption("2048 - GROUP THỢ ĐIỆN VIẾT CODE")
         self.clock = pygame.time.Clock()
         self.running = True
         
         # Biến toàn cục
-        self.username = "Player" # Mặc định
+        self.username = "" # Để trống để nhập ở intro
         self.ai_mode = False
         
         # Cài đặt (Settings)
         self.music_on = True
         self.sound_on = True
-        self.lang = 'VI' # Mặc định Tiếng Việt ('VI' hoặc 'EN')
+        self.lang = 'VI' 
 
         # Load nhạc nền
         bgm_path = os.path.join(SOUND_DIR, 'bgm.mp3')
