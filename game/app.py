@@ -1,4 +1,4 @@
-﻿import pygame
+import pygame
 import os
 from game.settings import * 
 #import hết luôn
@@ -28,8 +28,12 @@ class App:
         self.ai_mode = False
         
         #Settings
+        self.show_settings_popup = False
         self.lang = 'VI' 
+        
+
         self.sound_on = True 
+        self.music_on = True
 
         #SOUNDS
         #nạp các file âm thanh vào bộ nhớ
@@ -58,12 +62,26 @@ class App:
     def play_music(self):
         #Nhạc nền
         bgm_path = os.path.join(SOUND_DIR, SOUND_FILES['bgm'])
-        if os.path.exists(bgm_path) and self.sound_on: #kiểm tra có tồn tại và có bật
+        if os.path.exists(bgm_path) and self.music_on: #kiểm tra có tồn tại và có bật
             try:
                 pygame.mixer.music.load(bgm_path) #vừa tải vừa load tiết kiệm RAM
                 pygame.mixer.music.set_volume(0.3) 
                 pygame.mixer.music.play(-1) #cho lặp vô tận
             except: pass #Lỗi thì kệ, để tránh màn hình sập
+
+    def toggle_music(self):
+        #Chuyển trạng thái nhạc nền
+        self.music_on = not self.music_on
+        self.update_music_state()
+
+    def update_music_state(self):
+        #Cập nhật trạng thái nhạc nền
+        if self.music_on:
+            if not pygame.mixer.music.get_busy():
+                self.play_music()
+        else:
+            pygame.mixer.music.stop()
+
 
     def play_sfx(self, name):
         #phát các âm thanh effect
