@@ -137,7 +137,7 @@ class Game2048Env:
                 if v1 == v2 and v1 != 1: return False
                 if (v1==1 and v2==512) or (v1==512 and v2==1): return False
         return True
-        
+
     #Cơ chế save load game
     def get_saved_files(self):
         """Lấy danh sách các file save bắt đầu bằng 'save_'"""
@@ -158,7 +158,7 @@ class Game2048Env:
     def save_global_best_score(self):
         """Lưu điểm cao nhất"""
         with open("highscore.txt", "w") as f:
-            f.write(str(self.top_score))
+            f.write(str(int(self.top_score)))
 
     def save_game(self, filename, mode='Normal'):
         # Tự động thêm tiền tố và đuôi file
@@ -174,7 +174,7 @@ class Game2048Env:
 
         data = {
             "board": self.board.tolist(),
-            "score": self.score,
+            "score": int(self.score),
             "mode": mode,
             "game_over": self.game_over, # Lưu trạng thái thắng thua
             "date": str(datetime.now())
@@ -189,8 +189,10 @@ class Game2048Env:
             with open(filename, 'r') as f:
                 data = json.load(f)
                 self.board = np.array(data['board'])
-                self.score = data['score']
+                self.score = int(data['score'])
                 self.game_over = data.get('game_over', False)
                 self.load_global_best_score() # Load lại best score
             return True
-        except: return False
+        except Exception as e: 
+            print(f"Lỗi load game: {e}")
+            return False
