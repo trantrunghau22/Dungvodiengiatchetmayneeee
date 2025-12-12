@@ -4,6 +4,7 @@ import json
 #Cơ chế lưu file
 import os
 from datetime import datetime
+import glob
 
 class Game2048Env:
     def __init__(self, size=4):
@@ -13,6 +14,7 @@ class Game2048Env:
         self.game_over = False
         self.top_score = 0
         self.reset()
+        self.top_score = self.load_global_best_score()
 
     def reset(self):
         self.board = np.zeros((self.size, self.size), dtype=int)
@@ -135,22 +137,60 @@ class Game2048Env:
                 if v1 == v2 and v1 != 1: return False
                 if (v1==1 and v2==512) or (v1==512 and v2==1): return False
         return True
+        
     #Cơ chế save load game
+    def get_saved_files(self):
+        """Lấy danh sách các file save bắt đầu bằng 'save_'"""
+        return sorted(glob.glob("save_*.json"))
+
+    def load_global_best_score(self):
+        """Load điểm cao nhất từ file riêng"""
+        try:
+            if os.path.exists("highscore.txt"):
+                with open("highscore.txt", "r") as f:
+                    self.top_score = int(f.read())
+            else:
+                self.top_score = 0
+        except:
+            self.top_score = 0
+        return self.top_score
+
+    def save_global_best_score(self):
+        """Lưu điểm cao nhất"""
+        with open("highscore.txt", "w") as f:
+            f.write(str(self.top_score))
+
     def save_game(self, filename, mode='Normal'):
+        # Tự động thêm tiền tố và đuôi file
+        if not filename.startswith("save_"):
+            filename = "save_" + filename
+        if not filename.endswith(".json"):
+            filename += ".json"
+        
+        # Cập nhật Best Score trước khi lưu
+        if self.score > self.top_score:
+            self.top_score = self.score
+            self.save_global_best_score()
+
         data = {
             "board": self.board.tolist(),
             "score": self.score,
             "mode": mode,
+            "game_over": self.game_over, # Lưu trạng thái thắng thua
             "date": str(datetime.now())
         }
-        if not filename.endswith('.json'): filename += ''
+        
         with open(filename, 'w') as f:
             json.dump(data, f)
 
     def load_game(self, filename):
         if not os.path.exists(filename): return False
-        with open(filename, 'r') as f:
-            data = json.load(f)
-            self.board = np.array(data['board'])
-            self.score = data['score']
-        return True
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+                self.board = np.array(data['board'])
+                self.score = data['score']
+                self.game_over = data.get('game_over', False)
+                self.load_global_best_score() # Load lại best score
+            return True
+        except: return False

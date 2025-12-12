@@ -11,7 +11,7 @@ class IntroScreen:
         self.app = app
         self.screen = app.screen
         self.nickname = getattr(app, 'username', "") #Giữ lại tên user
-        self.err_msg = "" #thông báo lỗi nếu chưa nhập
+        self.input_active = False
         
         #LOAD ASSETS
         self.bg = pygame.image.load(os.path.join(IMG_DIR, 'backgroundintro.png')).convert()
@@ -42,25 +42,46 @@ class IntroScreen:
         self.btn_tut = pygame.Rect(cx + 200, cy, btn_w, btn_h)
         self.btn_exit = pygame.Rect(cx + 200, cy + row_dist, btn_w, btn_h)
         
+        self.show_load_popup = False
+        self.saved_files = []
+        self.err_msg = ""
+
         self.buttons = [
             (self.btn_new, "NEW GAME"), (self.btn_load, "LOAD GAME"), (self.btn_set, "SETTINGS"),
             (self.btn_cred, "CREDITS"), (self.btn_tut, "TUTORIAL"), (self.btn_exit, "EXIT")
         ]
-        
-        self.timer = 0
-
+    
     def handle_event(self, event):
+        # [LOGIC POPUP LOAD GAME]
+        if self.show_load_popup:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                cx, cy = WINDOW_WIDTH//2, WINDOW_HEIGHT//2
+                # Check click file
+                for i, f in enumerate(self.saved_files):
+                    rect = pygame.Rect(cx - 150, cy - 100 + i*50, 300, 40)
+                    if rect.collidepoint(event.pos):
+                        env = Game2048Env(size=TV_GRID_SIZE)
+                        if env.load_game(f):
+                            self.app.active_scene = BoardScene(self.app, env)
+                        self.show_load_popup = False
+                        return
+                
+                # Close (X)
+                if pygame.Rect(cx + 120, cy - 140, 30, 30).collidepoint(event.pos):
+                    self.show_load_popup = False
+            return
+
+        # [LOGIC CHÍNH]
         if event.type == pygame.MOUSEBUTTONDOWN:
-            #Vô vùng đó thì cho hàm kia thành true và có sound
             if self.input_rect.collidepoint(event.pos):
-                self.active_input = True
+                self.input_active = True
                 self.app.play_sfx('click')
             else:
-                self.active_input = False    
-            #Check các box
+                self.input_active = False    
+            
             if self.btn_new.collidepoint(event.pos):
                 self.app.play_sfx('click')
-                #Chỉ check tên khi ấn New Game
+                # Chỉ check tên khi ấn New Game
                 if len(self.nickname) > 0:
                     self.start_game()
                 else:
@@ -70,16 +91,15 @@ class IntroScreen:
                 self.app.play_sfx('click')
                 pygame.quit(); exit()
 
-            elif self.btn_load.collidepoint(event.pos) or self.btn_set.collidepoint(event.pos) or \
-                 self.btn_cred.collidepoint(event.pos) or self.btn_tut.collidepoint(event.pos):
-                 self.app.play_sfx('click')
-                 #Có thể mở settings/load mà không cần check tên
-                 if self.btn_set.collidepoint(event.pos):
-                     #LOGIC CHECK SETTINGS, BỔ SUNG THÊM MỤC NÀY 
-                     self.toggle_language() 
-       #phím nhập tên đồ thôi         
+            elif self.btn_load.collidepoint(event.pos):
+                self.app.play_sfx('click')
+                temp = Game2048Env()
+                self.saved_files = temp.get_saved_files()[:5]
+                self.show_load_popup = True
+
+        # Nhập tên
         if event.type == pygame.KEYDOWN:
-            if self.active_input:
+            if self.input_active:
                 if event.key == pygame.K_BACKSPACE:
                     self.nickname = self.nickname[:-1]
                 elif event.key == pygame.K_RETURN:
@@ -87,13 +107,7 @@ class IntroScreen:
                 else:
                     if len(self.nickname) < 15:
                         self.nickname += event.unicode
-            
-            #Cập nhạt user
             self.app.username = self.nickname
-
-    def toggle_language(self):
-        #NÈ KHÚC NÀY CẦN BỔ SUNG NÈ
-        self.app.lang = 'EN' if self.app.lang == 'VI' else 'VI'
 
     def start_game(self):
         self.app.play_sfx('start')
@@ -128,10 +142,19 @@ class IntroScreen:
         if self.err_msg:
             err = self.font.render(self.err_msg, True, COLOR_ACCENT_RED)
             self.screen.blit(err, (WINDOW_WIDTH//2 - err.get_width()//2, self.input_rect.bottom + 10))
-        #Vẽ các nút
-        for rect, text in self.buttons:
+        # Buttons
+        txt = TEXTS[self.app.lang]
+        buttons = [
+            (self.btn_new, txt['new_game']), (self.btn_load, txt['load_game']),
+            (self.btn_setting, txt['setting']), (self.btn_credit, txt['credit']),
+            (self.btn_tutorial, txt['tutorial']), (self.btn_exit, txt['exit'])
+        ]
+        for rect, text in buttons:
             self._draw_btn(rect, text)
-    #Hàm này để vẽ button và cho nó lắc đít ngựa chỉnh đổi màu đồ
+            
+        if self.show_load_popup:
+            self.draw_load_popup(self.screen)
+
     def _draw_btn(self, rect, text):
         mouse_pos = pygame.mouse.get_pos()
         draw_rect = rect.copy()
@@ -147,3 +170,28 @@ class IntroScreen:
         
         t_surf = self.font.render(text, True, COLOR_TEXT_DARK)
         self.screen.blit(t_surf, t_surf.get_rect(center=draw_rect.center))
+        
+    def draw_load_popup(self, screen):
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        overlay.fill(OVERLAY_COLOR)
+        self.window.blit(overlay, (0,0))
+
+        cx, cy = WINDOW_WIDTH//2, WINDOW_HEIGHT//2
+        box = pygame.Rect(cx - 200, cy - 150, 400, 350)
+        pygame.draw.rect(self.window, POPUP_BG_COLOR, box, border_radius=10)
+        
+        # Close btn
+        close = pygame.Rect(cx + 120, cy - 140, 30, 30)
+        pygame.draw.rect(self.window, (200,50,50), close)
+        x_txt = self.font.render("X", True, (255,255,255))
+        self.window.blit(x_txt, x_txt.get_rect(center=close.center))
+        
+        title = self.font.render(TEXTS[self.app.lang]['load_title'], True, (0,0,0))
+        self.window.blit(title, title.get_rect(center=(cx, cy - 120)))
+
+        for i, f in enumerate(self.saved_files):
+            rect = pygame.Rect(cx - 150, cy - 100 + i*50, 300, 40)
+            pygame.draw.rect(self.window, (200,200,255), rect, border_radius=5)
+            name = f.replace("save_", "").replace(".json", "")
+            t = self.font.render(name, True, (0,0,0))
+            self.window.blit(t, (rect.x + 10, rect.y + 5))

@@ -28,6 +28,8 @@ COLOR_TEXT_DARK = (60, 50, 50)
 COLOR_ACCENT_RED = (200, 60, 60)
 COLOR_ACCENT_BLUE = (60, 100, 200)
 
+POPUP_BG_COLOR = (255, 255, 255, 230) # Trắng đục (Alpha 230)
+OVERLAY_COLOR = (0, 0, 0, 150)        # Đen mờ che nền
 #Tọa độ các lưới của màn hình TV 
 TV_GRID_SIZE = 4 #kích thước 4x4
 TV_GRID_WIDTH = 490 
@@ -59,12 +61,30 @@ SHIN_FONT_PATH = os.path.join(FONT_DIR, 'shin_font.ttf') #truy cập file font
 TEXTS = {
     'VI': {
         'nickname_placeholder': 'Cho xin tên đi (max 15 ký tự)',
-        'start_err': 'Hãy nhập tên để chơi!',
+        'start_err': 'Nhập đi rồi chơi má ơi!',
         'score': 'Điểm',
         'best': 'Đỉnh nhất',
         'ask_save': 'Muốn lưu game thiệt hông?',
         'ask_quit': 'Bộ muốn thoát thiệt à?',
-        'yes': 'Chứ gì', 'no': 'Không có nha'
+        'yes': 'Ok nhuôn', 'no': 'Thôi khỏi đi',
+        'save_game_title': 'LƯU GAME',
+        'enter_name': 'Nhập tên file (Max 5 file):',
+        'file_exists': 'Tên file này có òi!',
+        'overwrite_ask': 'Bạn có muốn ghi đè không?',
+        'max_files': '5 file rồi má ơi!',
+        'exit_title': 'THOÁT GAME',
+        'exit_msg': 'Bạn có muốn lưu trước khi thoát?',
+        'btn_save_quit': 'Lưu & Thoát',
+        'btn_quit_now': 'Thoát luôn',
+        'new_best_title': 'BẠN THÌ GIỎI RỒI!',
+        'new_best_msg': 'Kỷ lục mới:',
+        'game_over_title': 'BẠI CHUYẾN NÀY',
+        'game_over_msg': 'Hết đi được rồi nha!',
+        'btn_continue': 'Tiếp tục',
+        'load_title': 'CHỌN FILE ĐỂ CHƠI',
+        'btn_menu': 'Về Menu',
+        'empty': '(Trống)',
+        'saved_success': 'Đã lưu nha!'
     },
     'EN': {
         'nickname_placeholder': 'Enter Name (max 15 chars)',
@@ -73,6 +93,24 @@ TEXTS = {
         'best': 'Best',
         'ask_save': 'Save Game?',
         'ask_quit': 'Quit?',
-        'yes': 'Yes', 'no': 'No'
+        'yes': 'Yes', 'no': 'No', 
+        'save_game_title': 'SAVE GAME',
+        'enter_name': 'Enter filename (Max 5 files):',
+        'file_exists': 'File already exists!',
+        'overwrite_ask': 'Do you want to overwrite?',
+        'max_files': 'Limit of 5 files reached!',
+        'exit_title': 'EXIT GAME',
+        'exit_msg': 'Save before quitting?',
+        'btn_save_quit': 'Save & Quit',
+        'btn_quit_now': 'Quit Now',
+        'new_best_title': 'CONGRATULATIONS!',
+        'new_best_msg': 'New High Score:',
+        'game_over_title': 'GAME OVER',
+        'game_over_msg': 'No moves left!',
+        'btn_continue': 'Continue',
+        'load_title': 'SELECT FILE TO LOAD',
+        'btn_menu': 'Menu',
+        'empty': '(Empty)',
+        'saved_success': 'Saved!'
     }
 }
