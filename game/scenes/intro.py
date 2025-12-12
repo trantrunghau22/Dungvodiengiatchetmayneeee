@@ -157,7 +157,7 @@ class IntroScreen:
         self.screen.blit(scaled_title, title_rect)
         
         # Vẽ Input Box
-        color = COLOR_ACCENT_BLUE if self.active_input else (200, 200, 200)
+        color = COLOR_ACCENT_BLUE if self.input_active else (200, 200, 200)
         pygame.draw.rect(self.screen, (255, 255, 255), self.input_rect, border_radius=10)
         pygame.draw.rect(self.screen, color, self.input_rect, width=3, border_radius=10)
         
@@ -165,7 +165,7 @@ class IntroScreen:
         self.screen.blit(txt_surf, (self.input_rect.x + 10, self.input_rect.y + 10))
         
         # Placeholder text
-        if not self.nickname and not self.active_input:
+        if not self.nickname and not self.input_active:
             hint = self.font.render(TEXTS[self.app.lang]['nickname_placeholder'], True, (150, 150, 150))
             self.screen.blit(hint, (self.input_rect.x + 10, self.input_rect.y + 10))
         
