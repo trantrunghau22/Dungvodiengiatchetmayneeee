@@ -21,7 +21,7 @@ COLOR_TEXT_DARK = (60, 50, 50)
 COLOR_ACCENT_RED = (200, 60, 60)
 COLOR_ACCENT_BLUE = (60, 100, 200)
 
-POPUP_BG_COLOR = (255, 255, 255, 230)
+POPUP_BG_COLOR = (255, 255, 255, 240)
 OVERLAY_COLOR = (0, 0, 0, 150)
 
 #GRID
@@ -45,7 +45,7 @@ SOUND_FILES = {
 }
 
 #FONTS
-FONT_NAME = "comic-sans"
+FONT_NAME = "arial"
 SHIN_FONT_PATH = os.path.join(FONT_DIR, 'shin_font.ttf')
 
 #TEXT 
@@ -86,7 +86,39 @@ TEXTS = {
         'load_title': 'CHỌN FILE ĐỂ CHƠI',
         'btn_menu': 'Về Menu',
         'empty': '(Trống)',
-        'saved_success': 'Đã lưu nha!'
+
+        'saved_success': 'Đã lưu nha!',
+        'delete_confirm': 'Xóa file này nha?',
+        'rename_title': 'Đổi tên:',
+        'file_not_found': 'Không thấy file đâu á!',
+        'delete': 'Xóa',
+        'rename': 'Đổi tên',
+
+        # Settings / Tutorial / Credit Content
+        'lang_label': 'Ngôn ngữ:',
+        'sound_label': 'Âm thanh:',
+        'on': 'BẬT', 'off': 'TẮT',
+
+        'tut_title': 'HƯỚNG DẪN',
+        'tut_content': [
+            "Cách chơi 2048:",
+            "- Dùng phím Mũi tên hoặc WASD để di chuyển.",
+            "- Hai ô cùng số sẽ gộp lại thành số lớn hơn.",
+            "- Ớt chuông (1) có cơ chế gộp đặc biệt.",
+            "- Mục tiêu: Đạt điểm càng cao càng tốt!",
+            "- Bấm 'S' để Lưu, 'Esc' để Thoát."
+        ],
+        
+        'credit_title': 'ĐỘI NGŨ THỰC HIỆN',
+        'credit_content': [
+            "Đồ án Nhập môn CNTT",
+            "Nhóm: Thợ Điện Viết Code",
+            "---",
+            "Coder 1: Trần Trung Hậu",
+            "Coder 2: Vũ Gia Bảo",
+            "Designer: Đào Khánh Băng",
+            "Support: Tường An, Ngô Bảo, Đăng Duy"
+        ]
     },
     'EN': {
         # --- Intro Menu [ADDED MISSING KEYS] ---
@@ -124,6 +156,38 @@ TEXTS = {
         'load_title': 'SELECT FILE TO LOAD',
         'btn_menu': 'Menu',
         'empty': '(Empty)',
-        'saved_success': 'Saved!'
+
+        'saved_success': 'Saved!',
+        'delete_confirm': 'Delete this file?',
+        'rename_title': 'Rename:',
+        'file_not_found': 'File not found!',
+        'delete': 'Delete',
+        'rename': 'Rename',
+
+        # Settings / Tutorial / Credit Content
+        'lang_label': 'Language:',
+        'sound_label': 'Sound:',
+        'on': 'ON', 'off': 'OFF',
+
+        'tut_title': 'TUTORIAL',
+        'tut_content': [
+            "How to play 2048:",
+            "- Use Arrow keys or WASD to move tiles.",
+            "- Merge tiles with same numbers.",
+            "- Chili (1) has special merge rules.",
+            "- Goal: Get the highest score!",
+            "- Press 'S' to Save, 'Esc' to Quit."
+        ],
+        
+        'credit_title': 'CREDITS',
+        'credit_content': [
+            "Intro to IT Project",
+            "Team: Electrician Coders",
+            "---",
+            "Coder 1: Tran Trung Hau",
+            "Coder 2: Vu Gia Bao",
+            "Designer: Dao Khanh Bang",
+            "Support: Tuong An, Ngo Bao, Dang Duy"
+        ]
     }
 }

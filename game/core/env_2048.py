@@ -196,3 +196,28 @@ class Game2048Env:
         except Exception as e: 
             print(f"Lỗi load game: {e}")
             return False
+            
+    # [MỚI] Hàm xóa file
+    def delete_game(self, filename):
+        try:
+            if os.path.exists(filename):
+                os.remove(filename)
+                return True
+        except: pass
+        return False
+
+    # [MỚI] Hàm đổi tên file
+    def rename_game(self, old_name, new_name):
+        if not new_name.strip(): return False
+        
+        if not old_name.startswith("save_"): old_name = "save_" + old_name
+        if not old_name.endswith(".json"): old_name += ".json"
+        
+        if not new_name.startswith("save_"): new_name = "save_" + new_name
+        if not new_name.endswith(".json"): new_name += ".json"
+        
+        if os.path.exists(new_name): return False # Trùng tên
+        try:
+            os.rename(old_name, new_name)
+            return True
+        except: return False
