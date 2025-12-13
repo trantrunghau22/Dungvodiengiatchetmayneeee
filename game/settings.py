@@ -94,6 +94,12 @@ TEXTS = {
         'delete': 'Xóa',
         'rename': 'Đổi tên',
 
+        # Settings
+        'lang_label': 'Ngôn ngữ:',
+        'music_label': 'Nhạc nền:',
+        'sfx_label': 'Hiệu ứng:',
+        'btn_back': 'QUAY LẠI',
+
         # Settings / Tutorial / Credit Content
         'lang_label': 'Ngôn ngữ:',
         'sound_label': 'Âm thanh:',
@@ -168,6 +174,12 @@ TEXTS = {
         'lang_label': 'Language:',
         'sound_label': 'Sound:',
         'on': 'ON', 'off': 'OFF',
+        
+        # Settings
+        'lang_label': 'Language:',
+        'music_label': 'Music:',
+        'sfx_label': 'SFX:',
+        'btn_back': 'BACK',
 
         'tut_title': 'TUTORIAL',
         'tut_content': [
