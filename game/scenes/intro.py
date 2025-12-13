@@ -30,10 +30,14 @@ class IntroScreen:
         self.title_base_size = self.title_img.get_size()
         
         # --- [QUAN TRỌNG] SỬA FONT ĐỂ HIỆN TIẾNG VIỆT ---
-        # Dùng SysFont('Comic Sans MS') thay vì shin_font.ttf
-        self.font = pygame.font.SysFont('Comic Sans MS', 30, bold=True)
-        self.small_font = pygame.font.SysFont('Comic Sans MS', 22)
-        
+        if os.path.exists(SHIN_FONT_PATH):
+            # Nếu tìm thấy file shin_font.ttf -> Dùng nó
+            self.font = pygame.font.Font(SHIN_FONT_PATH, 30)
+            self.small_font = pygame.font.Font(SHIN_FONT_PATH, 22)
+        else:
+            # Nếu không tìm thấy -> Mới dùng Arial
+            self.font = pygame.font.SysFont('arial', 30, bold=True)
+            self.small_font = pygame.font.SysFont('arial', 22)
         # INPUT & LAYOUT
         cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
         self.input_rect = pygame.Rect(cx - 150, cy - 20, 300, 50)
