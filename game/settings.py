@@ -45,7 +45,7 @@ SOUND_FILES = {
 }
 
 #FONTS
-FONT_NAME = "arial"
+FONT_NAME = "Comic Sans MS"
 SHIN_FONT_PATH = os.path.join(FONT_DIR, 'shin_font.ttf')
 
 #TEXT 

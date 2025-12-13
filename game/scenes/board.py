@@ -22,10 +22,10 @@ class BoardScene:
         self.sprites = load_number_sprites(IMG_DIR, (TILE_SIZE, TILE_SIZE))
         self.feats = load_feature_sprites(os.path.join(IMG_DIR, 'features.png'))
         
-        # [QUAN TRỌNG] Dùng Arial thay vì Shin Font để không lỗi tiếng Việt
-        self.font = pygame.font.SysFont('arial', 35, bold=True)
-        self.score_font = pygame.font.SysFont('arial', SCORE_FONT_SIZE, bold=True)
-        self.popup_font = pygame.font.SysFont('arial', 24)
+        # [QUAN TRỌNG] Dùng Comic Sans MS thay vì Shin Font để không lỗi tiếng Việt
+        self.font = pygame.font.SysFont('Comic Sans MS', 35, bold=True)
+        self.score_font = pygame.font.SysFont('Comic Sans MS', SCORE_FONT_SIZE, bold=True)
+        self.popup_font = pygame.font.SysFont('Comic Sans MS', 24)
         
         # Popup Images
         def load_popup_img(name, size):
@@ -209,7 +209,7 @@ class BoardScene:
             self.draw_text_centered(txt['max_files'], 0, color=(200,0,0))
 
     def draw_text_centered(self, text, y_off, size=24, color=(0,0,0)):
-        font = self.popup_font if size==24 else pygame.font.SysFont('arial', size)
+        font = self.popup_font if size==24 else pygame.font.SysFont('Comic Sans MS', size)
         surf = font.render(text, True, color)
         self.screen.blit(surf, surf.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 + y_off)))
 
