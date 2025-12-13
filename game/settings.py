@@ -52,7 +52,7 @@ SHIN_FONT_PATH = os.path.join(FONT_DIR, 'shin_font.ttf')
 TEXTS = {
     'VI': {
         # --- Intro Menu [BỔ SUNG CÁC KEY THIẾU] ---
-        'new_game': 'GAME MỚI',
+        'new_game': 'CHƠI GAME',
         'load_game': 'TẢI GAME',
         'setting': 'CÀI ĐẶT',
         'credit': 'TÁC GIẢ',
