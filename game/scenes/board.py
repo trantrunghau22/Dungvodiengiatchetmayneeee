@@ -27,8 +27,7 @@ class BoardScene:
         self.sprites = load_number_sprites(IMG_DIR, (TILE_SIZE, TILE_SIZE))
         self.feats = load_feature_sprites(os.path.join(IMG_DIR, 'features.png'))
         
-        # --- LOAD ASSETS (Popup Images) [MỚI] ---
-        # Tự động load và resize ảnh cho popup nếu có file
+        # --- LOAD ASSETS (Popup Images) ---
         def load_popup_img(name, size):
             path = os.path.join(IMG_DIR, name)
             if os.path.exists(path):
@@ -36,15 +35,20 @@ class BoardScene:
                 return pygame.transform.smoothscale(img, size)
             return None
 
-        # Load 3 ảnh tương ứng (kích thước size bạn có thể chỉnh lại ở đây)
-        self.img_exit = load_popup_img('popup_exit.png', (100, 100)) # Ảnh thoát
-        self.img_win  = load_popup_img('popup_win.png', (120, 100))  # Ảnh thắng/kỷ lục
-        self.img_lose = load_popup_img('popup_lose.png', (120, 100)) # Ảnh thua
+        self.img_exit = load_popup_img('popup_exit.png', (100, 100))
+        self.img_win  = load_popup_img('popup_win.png', (120, 100))
+        self.img_lose = load_popup_img('popup_lose.png', (120, 100))
 
-        # --- FONTS ---
-        self.font = pygame.font.Font(SHIN_FONT_PATH, 35) if os.path.exists(SHIN_FONT_PATH) else pygame.font.SysFont('arial', 35)
-        self.score_font = pygame.font.Font(SHIN_FONT_PATH, SCORE_FONT_SIZE) if os.path.exists(SHIN_FONT_PATH) else pygame.font.SysFont('arial', SCORE_FONT_SIZE)
-        self.popup_font = pygame.font.Font(SHIN_FONT_PATH, 24) if os.path.exists(SHIN_FONT_PATH) else pygame.font.SysFont('arial', 24)
+        # --- FONTS (Ưu tiên Shin Font) ---
+        if os.path.exists(SHIN_FONT_PATH):
+            self.font = pygame.font.Font(SHIN_FONT_PATH, 35)
+            self.score_font = pygame.font.Font(SHIN_FONT_PATH, SCORE_FONT_SIZE)
+            self.popup_font = pygame.font.Font(SHIN_FONT_PATH, 24)
+        else:
+            # Fallback nếu không tìm thấy file font
+            self.font = pygame.font.SysFont('arial', 35, bold=True)
+            self.score_font = pygame.font.SysFont('arial', SCORE_FONT_SIZE, bold=True)
+            self.popup_font = pygame.font.SysFont('arial', 24)
         
         # --- BUTTONS ---
         btn_width = 100
@@ -75,7 +79,6 @@ class BoardScene:
                 self.popup_mode = 'GAME_OVER'
 
     def handle_event(self, event):
-        # Ưu tiên xử lý Popup trước
         if self.popup_mode:
             self.handle_popup_event(event)
             return
@@ -125,8 +128,12 @@ class BoardScene:
     def handle_popup_event(self, event):
         cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
         
+        # Xử lý nhập tên file Save (Hỗ trợ gõ tiếng Việt nếu font hỗ trợ)
         if self.popup_mode == 'SAVE':
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.TEXTINPUT:
+                if len(self.input_text) < 15:
+                    self.input_text += event.text
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     if not self.input_text.strip(): return
                     filename = "save_" + self.input_text + ".json"
@@ -144,8 +151,7 @@ class BoardScene:
                     self.input_text = self.input_text[:-1]
                 elif event.key == pygame.K_ESCAPE:
                     self.popup_mode = None
-                else:
-                    if len(self.input_text) < 15: self.input_text += event.unicode
+            
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if not pygame.Rect(cx - 200, cy - 150, 400, 300).collidepoint(event.pos):
                     self.popup_mode = None
@@ -213,14 +219,11 @@ class BoardScene:
         cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
         txt = TEXTS[self.app.lang]
         
-        # Box nền chung cho mọi popup
         box_rect = pygame.Rect(cx - 200, cy - 150, 400, 300)
         box_surf = pygame.Surface((400, 300), pygame.SRCALPHA)
         box_surf.fill(POPUP_BG_COLOR)
         self.screen.blit(box_surf, box_rect)
         pygame.draw.rect(self.screen, (100, 100, 100), box_rect, 3, border_radius=15)
-
-        # ---------------- VẼ NỘI DUNG TỪNG LOẠI POPUP ----------------
 
         if self.popup_mode == 'SAVE':
             self.draw_text_centered(txt['save_game_title'], -100, size=30)
@@ -238,15 +241,10 @@ class BoardScene:
             self.draw_btn_simple(txt['no'], (cx + 20, cy + 50), (200, 100, 100))
 
         elif self.popup_mode == 'EXIT':
-            # --- VẼ ẢNH HOẶC PLACEHOLDER ---
-            # Vị trí ảnh
             img_rect = pygame.Rect(cx - 50, cy - 110, 100, 100) 
-            
             if self.img_exit:
-                # Nếu có ảnh thì vẽ ảnh
                 self.screen.blit(self.img_exit, img_rect)
             else:
-                # Nếu không có ảnh thì vẽ ô xám (Placeholder)
                 pygame.draw.rect(self.screen, (200,200,200), img_rect)
                 self.draw_text_centered("[IMG]", -60, size=15)
 
@@ -255,26 +253,22 @@ class BoardScene:
             self.draw_btn_simple(txt['btn_save_quit'], (cx + 10, cy + 60), (100, 200, 100), w=120)
 
         elif self.popup_mode == 'NEW_BEST':
-            # --- VẼ ẢNH HOẶC PLACEHOLDER ---
             img_rect = pygame.Rect(cx - 60, cy - 130, 120, 100)
-            
             if self.img_win:
                 self.screen.blit(self.img_win, img_rect)
             else:
-                pygame.draw.rect(self.screen, (255,215,0), img_rect) # Màu vàng
+                pygame.draw.rect(self.screen, (255,215,0), img_rect)
 
             self.draw_text_centered(txt['new_best_title'], -10, size=35, color=(200,0,0))
             self.draw_text_centered(f"{self.env.score}", 30, size=40)
             self.draw_btn_simple(txt['btn_continue'], (cx - 60, cy + 80), (100, 150, 255), w=120)
 
         elif self.popup_mode == 'GAME_OVER':
-            # --- VẼ ẢNH HOẶC PLACEHOLDER ---
             img_rect = pygame.Rect(cx - 60, cy - 130, 120, 100)
-            
             if self.img_lose:
                 self.screen.blit(self.img_lose, img_rect)
             else:
-                pygame.draw.rect(self.screen, (50,50,50), img_rect) # Màu xám đen
+                pygame.draw.rect(self.screen, (50,50,50), img_rect)
 
             self.draw_text_centered(txt['game_over_title'], 0, size=35, color=(255,0,0))
             self.draw_btn_simple(txt['btn_menu'], (cx - 60, cy + 80), (100, 150, 255), w=120)
@@ -283,17 +277,27 @@ class BoardScene:
             self.draw_text_centered(txt['max_files'], 0, color=(200,0,0))
 
     def draw_text_centered(self, text, y_off, size=24, color=(0,0,0)):
-        font = self.popup_font if size==24 else pygame.font.Font(SHIN_FONT_PATH, size)
+        # Nếu dùng font riêng thì tạo font từ file, nếu không dùng font hệ thống
+        if os.path.exists(SHIN_FONT_PATH):
+            font = pygame.font.Font(SHIN_FONT_PATH, size)
+        else:
+            font = pygame.font.SysFont('arial', size)
         surf = font.render(text, True, color)
         self.screen.blit(surf, surf.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT//2 + y_off)))
 
     def draw_text(self, text, x, y, size=24):
-        surf = self.popup_font.render(text, True, (0,0,0))
+        # Tương tự cho hàm draw_text
+        if os.path.exists(SHIN_FONT_PATH):
+            font = pygame.font.Font(SHIN_FONT_PATH, size)
+        else:
+            font = pygame.font.SysFont('arial', size)
+        surf = font.render(text, True, (0,0,0))
         self.screen.blit(surf, (x,y))
 
     def draw_btn_simple(self, text, pos, color, w=100, h=40):
         rect = pygame.Rect(pos[0], pos[1], w, h)
         pygame.draw.rect(self.screen, color, rect, border_radius=5)
+        # Dùng self.popup_font đã được khởi tạo ở __init__
         surf = self.popup_font.render(text, True, (255,255,255))
         self.screen.blit(surf, surf.get_rect(center=rect.center))
 

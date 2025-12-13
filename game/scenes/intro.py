@@ -49,7 +49,7 @@ class IntroScreen:
         
         self.timer = 0
         
-        # --- MODAL SYSTEM ---
+        # --- MODAL SYSTEM (HỆ THỐNG POPUP DUY NHẤT) ---
         self.modal = None # 'LOAD', 'SETTING', 'CREDIT', 'TUTORIAL'
         self.modal_rect = pygame.Rect(cx - 300, cy - 225, 600, 450)
         self.btn_close = pygame.Rect(self.modal_rect.right - 40, self.modal_rect.top + 10, 30, 30)
@@ -67,7 +67,7 @@ class IntroScreen:
         pygame.mixer.music.set_volume(self.vol_music)
 
     def handle_event(self, event):
-        # 1. MODAL EVENTS
+        # 1. MODAL EVENTS (Xử lý khi Popup đang mở)
         if self.modal:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Nút Close (X)
@@ -93,7 +93,7 @@ class IntroScreen:
             
             return
 
-        # 2. MAIN SCREEN EVENTS
+        # 2. MAIN SCREEN EVENTS (Xử lý màn hình chính)
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.input_rect.collidepoint(event.pos):
                 self.input_active = True
@@ -109,7 +109,7 @@ class IntroScreen:
                 self.app.play_sfx('click')
                 pygame.quit(); exit()
 
-            # Open Modals
+            # Mở các Modal (Chỉ dùng self.open_modal)
             elif self.btn_load.collidepoint(event.pos):
                 self.app.play_sfx('click')
                 self.open_modal('LOAD')
@@ -123,12 +123,16 @@ class IntroScreen:
                 self.app.play_sfx('click')
                 self.open_modal('TUTORIAL')
 
-        if event.type == pygame.KEYDOWN and self.input_active:
-            if event.key == pygame.K_BACKSPACE: self.nickname = self.nickname[:-1]
-            elif event.key == pygame.K_RETURN:
-                if len(self.nickname) > 0: self.start_game()
-            else:
-                if len(self.nickname) < 15: self.nickname += event.unicode
+        # Nhập tên User (Dùng Text Input để hỗ trợ tiếng Việt tốt hơn)
+        if self.input_active:
+            if event.type == pygame.TEXTINPUT:
+                if len(self.nickname) < 15:
+                    self.nickname += event.text
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE: 
+                    self.nickname = self.nickname[:-1]
+                elif event.key == pygame.K_RETURN:
+                    if len(self.nickname) > 0: self.start_game()
             self.app.username = self.nickname
 
     def open_modal(self, mode):
@@ -179,7 +183,6 @@ class IntroScreen:
             self._update_sfx_vol(event.pos[0], sfx_rect)
 
     def _update_music_vol(self, mouse_x, rect):
-        # Tính tỉ lệ % dựa trên vị trí chuột
         ratio = (mouse_x - rect.x) / rect.width
         self.vol_music = max(0.0, min(1.0, ratio))
         pygame.mixer.music.set_volume(self.vol_music)
@@ -187,9 +190,7 @@ class IntroScreen:
     def _update_sfx_vol(self, mouse_x, rect):
         ratio = (mouse_x - rect.x) / rect.width
         self.vol_sfx = max(0.0, min(1.0, ratio))
-        # Cập nhật global volume cho SFX (nếu app hỗ trợ) hoặc set trực tiếp khi play
-        # Ở đây ta lưu vào app để dùng sau
-        self.app.sfx_volume = self.vol_sfx # Cần sửa main.py để dùng biến này nếu chưa có
+        self.app.sfx_volume = self.vol_sfx 
 
     # --- LOAD GAME LOGIC ---
     def _handle_load_events(self, event):
@@ -197,8 +198,7 @@ class IntroScreen:
         top_y = self.modal_rect.top
         
         for i, f in enumerate(self.saved_files):
-            # [SỬA LỖI Y] Tính toán y chính xác
-            y = top_y + 80 + i*50 
+            y = top_y + 80 + i*50 # Tính toán tọa độ y cho từng dòng
             
             rect_del = pygame.Rect(cx + 130, y, 30, 40)
             rect_ren = pygame.Rect(cx + 95, y, 30, 40)
@@ -228,16 +228,18 @@ class IntroScreen:
 
     def _handle_rename_input(self, event):
         if self.rename_idx != -1:
-            if event.key == pygame.K_RETURN:
-                if self.rename_text.strip():
-                    old = self.saved_files[self.rename_idx]
-                    Game2048Env().rename_game(old, self.rename_text)
-                    self.open_modal('LOAD')
-                self.rename_idx = -1
-            elif event.key == pygame.K_ESCAPE: self.rename_idx = -1
-            elif event.key == pygame.K_BACKSPACE: self.rename_text = self.rename_text[:-1]
-            else:
-                if len(self.rename_text) < 15: self.rename_text += event.unicode
+            if event.type == pygame.TEXTINPUT:
+                if len(self.rename_text) < 15:
+                    self.rename_text += event.text
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if self.rename_text.strip():
+                        old = self.saved_files[self.rename_idx]
+                        Game2048Env().rename_game(old, self.rename_text)
+                        self.open_modal('LOAD')
+                    self.rename_idx = -1
+                elif event.key == pygame.K_ESCAPE: self.rename_idx = -1
+                elif event.key == pygame.K_BACKSPACE: self.rename_text = self.rename_text[:-1]
 
     def toggle_language(self):
         self.app.lang = 'EN' if self.app.lang == 'VI' else 'VI'
@@ -299,6 +301,7 @@ class IntroScreen:
         pygame.draw.rect(self.screen, POPUP_BG_COLOR, self.modal_rect, border_radius=10)
         pygame.draw.rect(self.screen, (100,100,100), self.modal_rect, 3, border_radius=10)
         
+        # Close Btn
         pygame.draw.rect(self.screen, (200, 50, 50), self.btn_close, border_radius=5)
         self.screen.blit(self.font.render("X", True, (255,255,255)), self.btn_close.move(5, -2))
         
@@ -312,7 +315,7 @@ class IntroScreen:
             if not self.saved_files:
                 self.screen.blit(self.small_font.render(txt['empty'], True, (150,150,150)), (cx-30, cy))
             for i, f in enumerate(self.saved_files[:6]):
-                y = top_y + 80 + i*50 # [FIXED Y HERE]
+                y = top_y + 80 + i*50 
                 rect_file = pygame.Rect(cx - 150, y, 240, 40)
                 
                 # Highlight logic
