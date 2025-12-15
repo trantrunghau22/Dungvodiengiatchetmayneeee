@@ -15,7 +15,7 @@ class App:
             print("Warning: Sound device not found.", e) #Lỗi thì in ra
 
         #Fullscreen
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.FULLSCREEN | pygame.SCALED)
+        self.screen = pygame.display.set_mode((WWIDTH, WHEIGHT), pygame.FULLSCREEN | pygame.SCALED)
         #pygame.display để tạo surface để vẽ lên, toán tử OR để FULLSCREEN hoặc là chỉnh kích thước to nhỏ tùy ý tự chỉnh lại
         self.window = self.screen
         

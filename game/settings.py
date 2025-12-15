@@ -11,8 +11,8 @@ FONT_DIR = os.path.join(ASSETS_DIR, 'fonts')
 #SCREEN
 pygame.init()
 info = pygame.display.Info()
-WINDOW_WIDTH = info.current_w
-WINDOW_HEIGHT = info.current_h
+WWIDTH = info.current_w
+WHEIGHT = info.current_h
 FPS = 60
 
 #CONCEPT
@@ -25,14 +25,14 @@ POPUP_BG_COLOR = (255, 255, 255, 240)
 OVERLAY_COLOR = (0, 0, 0, 150)
 
 #GRID
-TV_GRID_SIZE = 4
-TV_GRID_WIDTH = 490 
-TV_GRID_HEIGHT = 500
-TV_X = (WINDOW_WIDTH - TV_GRID_WIDTH) // 2
-TV_Y = (WINDOW_HEIGHT - TV_GRID_HEIGHT) // 2 + 50 
-TILE_GAP = 15
-TILE_SIZE = (TV_GRID_WIDTH - (TILE_GAP * (TV_GRID_SIZE + 1))) // TV_GRID_SIZE
-SCORE_FONT_SIZE = 60 
+TVSIZE = 4
+TVWIDTH = 490 
+TVHEIGHT = 500
+TV_X = (WWIDTH - TVWIDTH) // 2
+TV_Y = (WHEIGHT - TVHEIGHT) // 2 + 50 
+GAP = 15
+TILE_SIZE = (TVWIDTH - (GAP * (TVSIZE + 1))) // TVSIZE
+SCORESIZE = 60 
 
 #SOUNDS
 SOUND_FILES = {
@@ -48,27 +48,18 @@ SOUND_FILES = {
 FONT_NAME = "Comic Sans MS"
 SHIN_FONT_PATH = os.path.join(FONT_DIR, 'shin_font.ttf')
 
-#TEXT 
+#TEXTS
 TEXTS = {
     'VI': {
-        # --- Intro Menu [BỔ SUNG CÁC KEY THIẾU] ---
-        'new_game': 'CHƠI GAME',
-        'load_game': 'TẢI GAME',
-        'setting': 'CÀI ĐẶT',
-        'credit': 'TÁC GIẢ',
-        'tutorial': 'HƯỚNG DẪN',
-        'exit': 'THOÁT',
+        'new_game': 'GAME MỚI', 'load_game': 'TẢI GAME', 'setting': 'CÀI ĐẶT',
+        'credit': 'TÁC GIẢ', 'tutorial': 'HƯỚNG DẪN', 'exit': 'THOÁT',
         
-        # --- Main Game ---
         'nickname_placeholder': 'Cho xin tên đi (max 15 ký tự)',
         'start_err': 'Nhập đi rồi chơi má ơi!',
-        'score': 'Điểm',
-        'best': 'Đỉnh nhất',
-        'ask_save': 'Muốn lưu game thiệt hông?',
-        'ask_quit': 'Bộ muốn thoát thiệt à?',
+        'score': 'Điểm', 'best': 'Đỉnh nhất',
+        'ask_save': 'Muốn lưu game thiệt hông?', 'ask_quit': 'Bộ muốn thoát thiệt à?',
         'yes': 'Ok nhuôn', 'no': 'Thôi khỏi đi',
         
-        # --- Popups ---
         'save_game_title': 'LƯU GAME',
         'enter_name': 'Nhập tên file (Max 5 file):',
         'file_exists': 'Tên file này có òi!',
@@ -86,65 +77,53 @@ TEXTS = {
         'load_title': 'CHỌN FILE ĐỂ CHƠI',
         'btn_menu': 'Về Menu',
         'empty': '(Trống)',
-
         'saved_success': 'Đã lưu nha!',
         'delete_confirm': 'Xóa file này nha?',
         'rename_title': 'Đổi tên:',
         'file_not_found': 'Không thấy file đâu á!',
-        'delete': 'Xóa',
-        'rename': 'Đổi tên',
+        'delete': 'Xóa', 'rename': 'Đổi tên',
 
-        # Settings
+        'hello' : 'XIN CHÀO',
+
         'lang_label': 'Ngôn ngữ:',
         'music_label': 'Nhạc nền:',
         'sfx_label': 'Hiệu ứng:',
         'btn_back': 'QUAY LẠI',
-
-        # Settings / Tutorial / Credit Content
-        'lang_label': 'Ngôn ngữ:',
-        'sound_label': 'Âm thanh:',
         'on': 'BẬT', 'off': 'TẮT',
 
         'tut_title': 'HƯỚNG DẪN',
         'tut_content': [
-            "Cách chơi 2048:",
+            "Cách chơi 2048 của thợ điện:",
             "- Dùng phím Mũi tên hoặc WASD để di chuyển.",
             "- Hai ô cùng số sẽ gộp lại thành số lớn hơn.",
-            "- Ớt chuông (1) có cơ chế gộp đặc biệt.",
-            "- Mục tiêu: Đạt điểm càng cao càng tốt!",
-            "- Bấm 'S' để Lưu, 'Esc' để Thoát."
+            "- Ớt chuông có cơ chế gộp đặc biệt. Sau khi bạn chơi được đến ô 128, có",
+            "khả năng sẽ xuất hiện ô ớt chuông, các ô ớt chuông không thể gộp với nhau",
+            "nhưng có thể gộp với ô 256 rồi cả hai biến mất. Bạn sẽ có điểm thưởng.",
+            "- Mục tiêu: Đạt điểm càng cao càng tốt! Càng nhiều ô trống càng ngon!"
         ],
-        
         'credit_title': 'ĐỘI NGŨ THỰC HIỆN',
         'credit_content': [
             "Đồ án Nhập môn CNTT",
             "Nhóm: Thợ Điện Viết Code",
             "---",
-            "Coder 1: Trần Trung Hậu",
-            "Coder 2: Vũ Gia Bảo",
-            "Designer: Đào Khánh Băng",
-            "Support: Tường An, Ngô Bảo, Đăng Duy"
+            "Đào Khánh Băng",
+            "Vũ Gia Bảo",
+            "Trần Trung Hậu",
+            "Ngô Bảo",
+            "Phạm Trần Đăng Duy",
+            "Phạm Tường An"
         ]
     },
     'EN': {
-        # --- Intro Menu [ADDED MISSING KEYS] ---
-        'new_game': 'NEW GAME',
-        'load_game': 'LOAD GAME',
-        'setting': 'SETTINGS',
-        'credit': 'CREDITS',
-        'tutorial': 'TUTORIAL',
-        'exit': 'EXIT',
+        'new_game': 'NEW GAME', 'load_game': 'LOAD GAME', 'setting': 'SETTINGS',
+        'credit': 'CREDITS', 'tutorial': 'TUTORIAL', 'exit': 'EXIT',
 
-        # --- Main Game ---
         'nickname_placeholder': 'Enter Name (max 15 chars)',
         'start_err': 'Enter name first!',
-        'score': 'Score',
-        'best': 'Best',
-        'ask_save': 'Save Game?',
-        'ask_quit': 'Quit?',
+        'score': 'Score', 'best': 'Best',
+        'ask_save': 'Save Game?', 'ask_quit': 'Quit?',
         'yes': 'Yes', 'no': 'No', 
         
-        # --- Popups ---
         'save_game_title': 'SAVE GAME',
         'enter_name': 'Enter filename (Max 5 files):',
         'file_exists': 'File already exists!',
@@ -162,44 +141,43 @@ TEXTS = {
         'load_title': 'SELECT FILE TO LOAD',
         'btn_menu': 'Menu',
         'empty': '(Empty)',
-
         'saved_success': 'Saved!',
         'delete_confirm': 'Delete this file?',
         'rename_title': 'Rename:',
         'file_not_found': 'File not found!',
-        'delete': 'Delete',
-        'rename': 'Rename',
+        'delete': 'Delete', 'rename': 'Rename',
 
-        # Settings / Tutorial / Credit Content
-        'lang_label': 'Language:',
-        'sound_label': 'Sound:',
-        'on': 'ON', 'off': 'OFF',
-        
-        # Settings
+        'hello' : 'HELLO',
+
+
         'lang_label': 'Language:',
         'music_label': 'Music:',
         'sfx_label': 'SFX:',
         'btn_back': 'BACK',
+        'on': 'ON', 'off': 'OFF',
 
         'tut_title': 'TUTORIAL',
         'tut_content': [
             "How to play 2048:",
-            "- Use Arrow keys or WASD to move tiles.",
-            "- Merge tiles with same numbers.",
-            "- Chili (1) has special merge rules.",
-            "- Goal: Get the highest score!",
-            "- Press 'S' to Save, 'Esc' to Quit."
+            "- Use the arrow keys or WASD to move.",
+            "- Two tiles with the same number will merge into a larger one.",
+            "- Bell peppers have a special merging mechanic. After you reach the 128 tile, ", 
+            "there is a chance that a bell pepper tile will appear. Bell pepper tiles cannot",
+            "merge with each other, but they can merge with a 256 tile, after which both",
+            "tiles disappear and you receive a bonus score."
+            "- Goal: Get the highest score possible! The more empty tiles, the better!"
         ],
-        
         'credit_title': 'CREDITS',
         'credit_content': [
             "Intro to IT Project",
             "Team: Electrician Coders",
             "---",
-            "Coder 1: Tran Trung Hau",
-            "Coder 2: Vu Gia Bao",
-            "Designer: Dao Khanh Bang",
-            "Support: Tuong An, Ngo Bao, Dang Duy"
+            "Dao Khanh Bang",
+            "Vu Gia Bao",
+            "Tran Trung Hau",
+            "Ngo Bao",
+            "Pham Tran Dang Duy",
+            "Pham Tuong An"
         ]
     }
 }

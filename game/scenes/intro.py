@@ -5,6 +5,7 @@ import random
 from game.settings import *
 from game.scenes.board import BoardScene
 from game.core.env_2048 import Game2048Env
+from game.core.rs import draw_popup_bg, draw_styled_btn, SettingsHelper
 
 class IntroScreen:
     def __init__(self, app):
@@ -16,8 +17,8 @@ class IntroScreen:
         
         bg_path = os.path.join(IMG_DIR, 'backgroundintro.png')
         if os.path.exists(bg_path): self.bg = pygame.image.load(bg_path).convert()
-        else: self.bg = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT)); self.bg.fill((250, 248, 239))
-        self.bg = pygame.transform.scale(self.bg, (WINDOW_WIDTH, WINDOW_HEIGHT))
+        else: self.bg = pygame.Surface((WWIDTH, WHEIGHT)); self.bg.fill((250, 248, 239))
+        self.bg = pygame.transform.scale(self.bg, (WWIDTH, WHEIGHT))
         
         title_path = os.path.join(IMG_DIR, 'title.png')
         if os.path.exists(title_path): self.title_img = pygame.image.load(title_path).convert_alpha()
@@ -31,7 +32,7 @@ class IntroScreen:
             self.font = pygame.font.SysFont('arial', 30, bold=True)
             self.small_font = pygame.font.SysFont('arial', 22)
         
-        cx, cy = WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2
+        cx, cy = WWIDTH // 2, WHEIGHT // 2
         self.input_rect = pygame.Rect(cx - 150, cy - 20, 300, 50)
         
         btn_w, btn_h = 260, 80
@@ -49,19 +50,20 @@ class IntroScreen:
         
         self.saved_files = [] 
         self.rename_idx = -1; self.rename_text = ""; self.delete_confirm_idx = -1
-        self.vol_music = 0.5; self.vol_sfx = 0.5; self.dragging_music = False; self.dragging_sfx = False
-        pygame.mixer.music.set_volume(self.vol_music)
+        
+        self.settings_helper = SettingsHelper(app)
 
     def handle_event(self, event):
         if self.modal:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if self.btn_close.collidepoint(event.pos): self.modal = None; return
-                if self.modal == 'LOAD': self._handle_load_events(event)
-                elif self.modal == 'SETTING': self._handle_setting_click(event)
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if self.modal == 'SETTING': self.dragging_music = False; self.dragging_sfx = False
-            elif event.type == pygame.MOUSEMOTION:
-                if self.modal == 'SETTING': self._handle_setting_drag(event)
+            if event.type == pygame.MOUSEBUTTONDOWN and self.btn_close.collidepoint(event.pos):
+                self.modal = None; return
+
+            if self.modal == 'LOAD': self._handle_load_events(event)
+            elif self.modal == 'SETTING': 
+                cx, cy = self.modal_rect.centerx, self.modal_rect.centery
+                res = self.settings_helper.handle_event(event, cx, cy)
+                if res == 'CLOSE': self.modal = None
+            
             elif event.type == pygame.KEYDOWN and self.modal == 'LOAD':
                 self._handle_rename_input(event)
             if event.type == pygame.TEXTINPUT and self.modal == 'LOAD' and self.rename_idx != -1:
@@ -71,6 +73,7 @@ class IntroScreen:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.input_rect.collidepoint(event.pos): self.input_active = True; self.app.play_sfx('click')
             else: self.input_active = False    
+            
             if self.btn_new.collidepoint(event.pos):
                 self.app.play_sfx('click')
                 if len(self.nickname) > 0: self.start_game()
@@ -97,35 +100,6 @@ class IntroScreen:
             self.saved_files = temp.get_saved_files()
             self.rename_idx = -1; self.delete_confirm_idx = -1
 
-    def _handle_setting_click(self, event):
-        cx, cy = self.modal_rect.centerx, self.modal_rect.centery
-        lang_rect = pygame.Rect(cx + 20, cy - 80, 120, 30)
-        music_rect = pygame.Rect(cx + 20, cy - 20, 200, 20)
-        sfx_rect   = pygame.Rect(cx + 20, cy + 40, 200, 20)
-        back_rect  = pygame.Rect(cx - 60, cy + 120, 120, 40)
-
-        if lang_rect.collidepoint(event.pos): self.toggle_language(); self.app.play_sfx('click')
-        elif music_rect.collidepoint(event.pos): self.dragging_music = True; self._update_music_vol(event.pos[0], music_rect)
-        elif sfx_rect.collidepoint(event.pos): self.dragging_sfx = True; self._update_sfx_vol(event.pos[0], sfx_rect)
-        elif back_rect.collidepoint(event.pos): self.modal = None; self.app.play_sfx('click')
-
-    def _handle_setting_drag(self, event):
-        cx, cy = self.modal_rect.centerx, self.modal_rect.centery
-        music_rect = pygame.Rect(cx + 20, cy - 20, 200, 20)
-        sfx_rect   = pygame.Rect(cx + 20, cy + 40, 200, 20)
-        if self.dragging_music: self._update_music_vol(event.pos[0], music_rect)
-        elif self.dragging_sfx: self._update_sfx_vol(event.pos[0], sfx_rect)
-
-    def _update_music_vol(self, mouse_x, rect):
-        ratio = (mouse_x - rect.x) / rect.width
-        self.vol_music = max(0.0, min(1.0, ratio))
-        pygame.mixer.music.set_volume(self.vol_music)
-
-    def _update_sfx_vol(self, mouse_x, rect):
-        ratio = (mouse_x - rect.x) / rect.width
-        self.vol_sfx = max(0.0, min(1.0, ratio))
-        self.app.sfx_volume = self.vol_sfx 
-
     def _handle_load_events(self, event):
         cx, cy = self.modal_rect.centerx, self.modal_rect.centery
         top_y = self.modal_rect.top
@@ -145,7 +119,7 @@ class IntroScreen:
                 return
             if rect_file.collidepoint(event.pos):
                 if self.rename_idx == -1 and self.delete_confirm_idx == -1:
-                    env = Game2048Env(size=TV_GRID_SIZE)
+                    env = Game2048Env(size=TVSIZE)
                     if env.load_game(f): self.app.active_scene = BoardScene(self.app, env)
 
         self.delete_confirm_idx = -1; self.rename_idx = -1
@@ -161,13 +135,10 @@ class IntroScreen:
             elif event.key == pygame.K_ESCAPE: self.rename_idx = -1
             elif event.key == pygame.K_BACKSPACE: self.rename_text = self.rename_text[:-1]
 
-    def toggle_language(self):
-        self.app.lang = 'EN' if self.app.lang == 'VI' else 'VI'
-
     def start_game(self):
         self.app.play_sfx('start')
         self.app.username = self.nickname
-        env = Game2048Env(size=TV_GRID_SIZE)
+        env = Game2048Env(size=TVSIZE)
         self.app.active_scene = BoardScene(self.app, env)
 
     def update(self, dt): self.timer += dt * 0.005
@@ -177,17 +148,42 @@ class IntroScreen:
         scale = 1.0 + 0.05 * math.sin(self.timer)
         w = int(self.title_base_size[0] * scale); h = int(self.title_base_size[1] * scale)
         scaled_title = pygame.transform.smoothscale(self.title_img, (w, h))
-        self.screen.blit(scaled_title, scaled_title.get_rect(center=(WINDOW_WIDTH//2, 150)))
+        self.screen.blit(scaled_title, scaled_title.get_rect(center=(WWIDTH//2, 150)))
         
         color = COLOR_ACCENT_BLUE if self.input_active else (200, 200, 200)
         pygame.draw.rect(self.screen, (255, 255, 255), self.input_rect, border_radius=10)
         pygame.draw.rect(self.screen, color, self.input_rect, width=3, border_radius=10)
         self.screen.blit(self.font.render(self.nickname, True, COLOR_TEXT_DARK), (self.input_rect.x+10, self.input_rect.y+5))
         
+        if self.app.username:
+            txt_hello = TEXTS[self.app.lang]['hello']
+            full_text = f"{txt_hello} {self.app.username.upper()}!"
+            
+            if os.path.exists(SHIN_FONT_PATH):
+                big_font = pygame.font.Font(SHIN_FONT_PATH, 55) 
+            else:
+                big_font = pygame.font.SysFont('arial', 55, bold=True)
+
+            text_x = (WWIDTH // 2) + 20
+            text_y = self.input_rect.y - 150 
+
+            outline_color = (0, 0, 0)
+            main_color = (255, 215, 0) 
+            
+            offsets = [(-2, -2), (-2, 2), (2, -2), (2, 2)] 
+            for ox, oy in offsets:
+                surf = big_font.render(full_text, True, outline_color)
+                rect = surf.get_rect(center=(text_x + ox, text_y + oy))
+                self.screen.blit(surf, rect)
+
+            surf = big_font.render(full_text, True, main_color)
+            rect = surf.get_rect(center=(text_x, text_y))
+            self.screen.blit(surf, rect)
+
         if not self.nickname and not self.input_active:
             self.screen.blit(self.small_font.render(TEXTS[self.app.lang]['nickname_placeholder'], True, (150,150,150)), (self.input_rect.x+10, self.input_rect.y+10))
         if self.err_msg:
-            self.screen.blit(self.small_font.render(self.err_msg, True, COLOR_ACCENT_RED), (WINDOW_WIDTH//2-100, self.input_rect.bottom+10))
+            self.screen.blit(self.small_font.render(self.err_msg, True, COLOR_ACCENT_RED), (WWIDTH//2-100, self.input_rect.bottom+10))
         
         txt = TEXTS[self.app.lang]
         buttons = [
@@ -207,26 +203,23 @@ class IntroScreen:
             color = COLOR_ACCENT_BLUE
         else: color = (255, 200, 150)
         
-        # Shadow
         shadow = draw_rect.copy(); shadow.move_ip(3, 3)
         pygame.draw.rect(self.screen, (50,50,50), shadow, border_radius=15)
-        
         pygame.draw.rect(self.screen, color, draw_rect, border_radius=15)
         pygame.draw.rect(self.screen, (255, 255, 255), draw_rect, width=3, border_radius=15)
         t = self.font.render(text, True, COLOR_TEXT_DARK)
         self.screen.blit(t, t.get_rect(center=draw_rect.center))
 
     def _draw_modal(self):
-        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        overlay = pygame.Surface((WWIDTH, WHEIGHT), pygame.SRCALPHA)
         overlay.fill(OVERLAY_COLOR); self.screen.blit(overlay, (0,0))
         
-        # Style cho Modal (Bóng đổ + Viền)
-        shadow_rect = self.modal_rect.copy(); shadow_rect.move_ip(5, 5)
-        pygame.draw.rect(self.screen, (50, 50, 50), shadow_rect, border_radius=10)
-        pygame.draw.rect(self.screen, POPUP_BG_COLOR, self.modal_rect, border_radius=10)
-        pygame.draw.rect(self.screen, COLOR_TEXT_DARK, self.modal_rect, 4, border_radius=10)
+        if self.modal == 'SETTING':
+            self.settings_helper.draw(self.screen, self.modal_rect.centerx, self.modal_rect.centery, self.small_font, self.font)
+            return
+
+        draw_popup_bg(self.screen, self.modal_rect)
         
-        # Nút Close (Màu đỏ + viền)
         pygame.draw.rect(self.screen, (200, 50, 50), self.btn_close, border_radius=5)
         pygame.draw.rect(self.screen, COLOR_TEXT_DARK, self.btn_close, 2, border_radius=5)
         self.screen.blit(self.font.render("X", True, (255,255,255)), self.btn_close.move(5, -2))
@@ -244,52 +237,22 @@ class IntroScreen:
                 y = top_y + 80 + i*50 
                 rect_file = pygame.Rect(cx - 150, y, 240, 40)
                 
-                # Logic vẽ từng dòng file (Thêm viền cho đẹp)
                 if i == self.delete_confirm_idx:
                     pygame.draw.rect(self.screen, (255, 200, 200), rect_file, border_radius=5)
-                    pygame.draw.rect(self.screen, COLOR_ACCENT_RED, rect_file, 2, border_radius=5)
                     self.screen.blit(self.small_font.render(txt['delete_confirm'], True, (200,0,0)), (rect_file.x+5, rect_file.y+8))
                 elif i == self.rename_idx:
                     pygame.draw.rect(self.screen, (255,255,255), rect_file, border_radius=5)
-                    pygame.draw.rect(self.screen, COLOR_ACCENT_BLUE, rect_file, 2, border_radius=5)
+                    pygame.draw.rect(self.screen, (0,0,255), rect_file, 2, border_radius=5)
                     self.screen.blit(self.small_font.render(self.rename_text, True, (0,0,0)), (rect_file.x+5, rect_file.y+8))
                 else:
                     pygame.draw.rect(self.screen, (220,220,255), rect_file, border_radius=5)
                     name = f.replace("save_", "").replace(".json", "")
                     self.screen.blit(self.small_font.render(name, True, (0,0,0)), (rect_file.x+10, rect_file.y+8))
                 
-                # Nút con (Edit/Delete)
                 pygame.draw.rect(self.screen, (255, 200, 100), (cx + 95, y, 30, 40), border_radius=5)
                 self.screen.blit(self.small_font.render("E", True, (0,0,0)), (cx + 102, y+8))
                 pygame.draw.rect(self.screen, (200, 100, 100), (cx + 130, y, 30, 40), border_radius=5)
                 self.screen.blit(self.small_font.render("X", True, (255,255,255)), (cx + 137, y+8))
-
-        elif self.modal == 'SETTING':
-            title = self.font.render(txt['setting'], True, COLOR_TEXT_DARK)
-            self.screen.blit(title, title.get_rect(center=(cx, top_y + 30)))
-            
-            # 1. Ngôn ngữ
-            self.screen.blit(self.small_font.render(txt['lang_label'], True, COLOR_TEXT_DARK), (cx - 150, cy - 80))
-            lang_rect = pygame.Rect(cx + 20, cy - 80, 120, 30)
-            self._draw_btn_simple(self.app.lang, lang_rect, (100, 200, 100))
-
-            # 2. Music Slider (Style mới)
-            self.screen.blit(self.small_font.render(txt['music_label'], True, COLOR_TEXT_DARK), (cx - 150, cy - 20))
-            music_rect = pygame.Rect(cx + 20, cy - 20, 200, 20)
-            pygame.draw.rect(self.screen, (200,200,200), music_rect, border_radius=10) # Bar nền
-            pygame.draw.rect(self.screen, COLOR_ACCENT_BLUE, (music_rect.x, music_rect.y, music_rect.width * self.vol_music, 20), border_radius=10) # Bar fill
-            pygame.draw.circle(self.screen, COLOR_TEXT_DARK, (int(music_rect.x + music_rect.width * self.vol_music), music_rect.centery), 12)
-
-            # 3. SFX Slider
-            self.screen.blit(self.small_font.render(txt['sfx_label'], True, COLOR_TEXT_DARK), (cx - 150, cy + 40))
-            sfx_rect = pygame.Rect(cx + 20, cy + 40, 200, 20)
-            pygame.draw.rect(self.screen, (200,200,200), sfx_rect, border_radius=10)
-            pygame.draw.rect(self.screen, COLOR_ACCENT_BLUE, (sfx_rect.x, sfx_rect.y, sfx_rect.width * self.vol_sfx, 20), border_radius=10)
-            pygame.draw.circle(self.screen, COLOR_TEXT_DARK, (int(sfx_rect.x + sfx_rect.width * self.vol_sfx), sfx_rect.centery), 12)
-
-            # 4. Back Button
-            back_rect = pygame.Rect(cx - 60, cy + 120, 120, 40)
-            self._draw_btn_simple(txt['btn_back'], back_rect, COLOR_ACCENT_RED)
 
         elif self.modal == 'CREDIT':
             title = self.font.render(txt['credit_title'], True, COLOR_TEXT_DARK)
@@ -308,9 +271,3 @@ class IntroScreen:
                 t = self.small_font.render(line, True, COLOR_TEXT_DARK)
                 self.screen.blit(t, (self.modal_rect.x + 50, y))
                 y += 35
-
-    def _draw_btn_simple(self, text, rect, color):
-        pygame.draw.rect(self.screen, color, rect, border_radius=8)
-        pygame.draw.rect(self.screen, COLOR_TEXT_DARK, rect, 2, border_radius=8)
-        t = self.small_font.render(text, True, (255,255,255))
-        self.screen.blit(t, t.get_rect(center=rect.center))

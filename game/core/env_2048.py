@@ -12,9 +12,8 @@ class Game2048Env:
         self.board = np.zeros((size, size), dtype=int)
         self.game_over = False
         self.top_score = 0
-        
-        # [QUAN TRỌNG] Load top score ngay khi khởi tạo
-        self.load_global_best_score()
+        #Load top score ngay khi khởi tạo
+        self.load_bestscore()
         
         self.reset()
 
@@ -22,11 +21,11 @@ class Game2048Env:
         self.board = np.zeros((self.size, self.size), dtype=int)
         self.score = 0
         self.game_over = False
-        self.spawn_tile()
-        self.spawn_tile()
+        self.spawn()
+        self.spawn()
         return self.board
 
-    def spawn_tile(self):
+    def spawn(self):
         empty = list(zip(*np.where(self.board == 0)))
         if not empty: return False
         r, c = random.choice(empty)
@@ -44,17 +43,17 @@ class Game2048Env:
 
     def step(self, action):
         prev_board = self.board.copy()
-        if action == 2: self._move_left()
-        elif action == 3: self._move_right()
-        elif action == 0: self._move_up()
-        elif action == 1: self._move_down()
+        if action == 2: self.to_left()
+        elif action == 3: self.to_right()
+        elif action == 0: self.to_up()
+        elif action == 1: self.to_down()
         
         moved = not np.array_equal(prev_board, self.board)
-        if moved: self.spawn_tile()
-        if self._is_done(): self.game_over = True
+        if moved: self.spawn()
+        if self.isdone(): self.game_over = True
         return self.board, self.score, self.game_over, moved
 
-    def _merge_row(self, row):
+    def merge_row(self, row):
         new_row = row[row != 0]
         merged_row = []
         i = 0
@@ -74,16 +73,16 @@ class Game2048Env:
         zeros = np.zeros(self.size - len(res), dtype=int)
         return np.concatenate([res, zeros])
 
-    def _move_left(self):
-        for r in range(self.size): self.board[r] = self._merge_row(self.board[r])
-    def _move_right(self):
-        self.board = np.fliplr(self.board); self._move_left(); self.board = np.fliplr(self.board)
-    def _move_up(self):
-        self.board = self.board.T; self._move_left(); self.board = self.board.T
-    def _move_down(self):
-        self.board = self.board.T; self._move_right(); self.board = self.board.T
+    def to_left(self):
+        for r in range(self.size): self.board[r] = self.merge_row(self.board[r])
+    def to_right(self):
+        self.board = np.fliplr(self.board); self.to_left(); self.board = np.fliplr(self.board)
+    def to_up(self):
+        self.board = self.board.T; self.to_left(); self.board = self.board.T
+    def to_down(self):
+        self.board = self.board.T; self.to_right(); self.board = self.board.T
 
-    def _is_done(self):
+    def isdone(self):
         if (self.board == 0).any(): return False
         for r in range(self.size):
             for c in range(self.size - 1):
@@ -99,16 +98,16 @@ class Game2048Env:
 
     def get_saved_files(self): return sorted(glob.glob("save_*.json"))
 
-    def load_global_best_score(self):
+    def load_bestscore(self):
         try:
-            if os.path.exists("highscore.txt"):
-                with open("highscore.txt", "r") as f: self.top_score = int(f.read())
+            if os.path.exists("bestscore.txt"):
+                with open("bestscore.txt", "r") as f: self.top_score = int(f.read())
             else: self.top_score = 0
         except: self.top_score = 0
         return self.top_score
 
-    def save_global_best_score(self):
-        with open("highscore.txt", "w") as f: f.write(str(int(self.top_score)))
+    def save_bestscore(self):
+        with open("bestscore.txt", "w") as f: f.write(str(int(self.top_score)))
 
     def save_game(self, filename, mode='Normal'):
         if not filename.startswith("save_"): filename = "save_" + filename
@@ -116,7 +115,7 @@ class Game2048Env:
         
         if self.score > self.top_score:
             self.top_score = self.score
-            self.save_global_best_score()
+            self.save_bestscore()
 
         data = {
             "board": self.board.tolist(),
@@ -135,7 +134,7 @@ class Game2048Env:
                 self.board = np.array(data['board'])
                 self.score = int(data['score'])
                 self.game_over = data.get('game_over', False)
-                self.load_global_best_score()
+                self.load_bestscore()
             return True
         except: return False
 
