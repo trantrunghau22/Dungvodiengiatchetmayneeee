@@ -45,6 +45,7 @@ class BoardScene:
         self.btn_menu = pygame.Rect(WWIDTH - 150, btn_y, btn_width, btn_height)
         self.btn_save = pygame.Rect(WWIDTH - 270, btn_y, btn_width, btn_height)
         self.btn_setting = pygame.Rect(WWIDTH - 160, btn_y - 100, btn_width, btn_height)
+        self.btn_ai = pygame.Rect(WWIDTH - 260, 180, 200, 80)
 
         self.popup_mode = None 
         self.input_text = ""; self.overwrite_target = ""; self.best_shown = False 
@@ -82,6 +83,10 @@ class BoardScene:
             if self.env.score >= self.env.top_score and self.env.score > 0 and not self.best_shown:
                 self.popup_mode = 'NEW_BEST'; self.env.save_bestscore(); self.best_shown = True
             elif not self.best_shown: self.popup_mode = 'GAME_OVER'
+        #AI
+        if self.app.ai_mode and not self.env.game_over and not self.popup_mode:
+            # GẮN CODE AI VÔ ĐÂY
+            pass
 
     def handle_event(self, event):
         if self.popup_mode: self.handle_popup_event(event); return
@@ -95,23 +100,26 @@ class BoardScene:
                 self.app.play_sfx('click'); self.popup_mode = 'EXIT' 
             elif self.btn_setting.collidepoint(event.pos):
                 self.app.play_sfx('click'); self.popup_mode = 'SETTING'
+            elif self.btn_ai.collidepoint(event.pos):
+                self.app.play_sfx('click')
+                self.app.ai_mode = not self.app.ai_mode
         
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE: self.popup_mode = 'EXIT'
-            action = None
-            if event.key in [pygame.K_UP, pygame.K_w]: action = 0
-            elif event.key in [pygame.K_DOWN, pygame.K_s]: action = 1
-            elif event.key in [pygame.K_LEFT, pygame.K_a]: action = 2
-            elif event.key in [pygame.K_RIGHT, pygame.K_d]: action = 3
-            
-            if action is not None and not self.env.game_over:
-                max_before = np.max(self.env.board) if self.env.board.size > 0 else 0
-                board, current_score, done, moved = self.env.step(action)
-                if moved:
-                    self.app.play_sfx('slide') 
-                    max_after = np.max(self.env.board) if self.env.board.size > 0 else 0
-                    if max_after > max_before: self.app.play_sfx('merge')
-                if done: self.app.play_sfx('lose')
+            if not self.app.ai_mode:
+                action = None
+                if event.key in [pygame.K_UP, pygame.K_w]: action = 0
+                elif event.key in [pygame.K_DOWN, pygame.K_s]: action = 1
+                elif event.key in [pygame.K_LEFT, pygame.K_a]: action = 2
+                elif event.key in [pygame.K_RIGHT, pygame.K_d]: action = 3
+                if action is not None and not self.env.game_over:
+                    max_before = np.max(self.env.board) if self.env.board.size > 0 else 0
+                    board, current_score, done, moved = self.env.step(action)
+                    if moved:
+                        self.app.play_sfx('slide') 
+                        max_after = np.max(self.env.board) if self.env.board.size > 0 else 0
+                        if max_after > max_before: self.app.play_sfx('merge')
+                    if done: self.app.play_sfx('lose')
 
     def handle_popup_event(self, event):
         cx, cy = WWIDTH // 2, WHEIGHT // 2
@@ -163,7 +171,9 @@ class BoardScene:
         best_x = WWIDTH - 250 
         best_surf = self.score_font.render(str(self.env.top_score), True, (0,0,0))
         self.screen.blit(best_surf, (best_x, 38)) 
-        
+        ai_color = (100, 255, 100) if self.app.ai_mode else (200, 200, 200)
+        draw_styled_btn(self.screen, self.btn_ai, TEXTS[self.app.lang]['ai_btn'], self.small_font, ai_color)
+
         for r in range(TVSIZE):
             for c in range(TVSIZE):
                 val = self.env.board[r][c]

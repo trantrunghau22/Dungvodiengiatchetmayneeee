@@ -85,6 +85,8 @@ TEXTS = {
 
         'hello' : 'XIN CHÀO',
 
+        'ai_btn': 'CHƠI AI',
+
         'lang_label': 'Ngôn ngữ:',
         'music_label': 'Nhạc nền:',
         'sfx_label': 'Hiệu ứng:',
@@ -148,6 +150,8 @@ TEXTS = {
         'delete': 'Delete', 'rename': 'Rename',
 
         'hello' : 'HELLO',
+
+        'ai_btn': 'CHƠI AI',
 
 
         'lang_label': 'Language:',
