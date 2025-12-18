@@ -40,16 +40,16 @@ Dự án này tái hiện trò chơi 2048 nổi tiếng với giao diện đồ 
 
 Đồ án khuyến khích sử dụng **Micromamba** (hoặc Conda) để quản lý môi trường nhằm tránh xung đột thư viện.
 
-### 1. Clone dự án
-```bash
-git clone https://github.com/trantrunghau22/Dungvodiengiatchetmayneeee.git
-cd Dungvodiengiatchetmayneeee
-```
-
-### 2. Thiết lập môi trường
+### 1. Thiết lập môi trường
 ```bash
 micromamba create -n game_2048 python=3.9
 micromamba activate game_2048
+```
+
+### 2. Clone dự án
+```bash
+git clone https://github.com/trantrunghau22/Dungvodiengiatchetmayneeee.git
+cd Dungvodiengiatchetmayneeee
 ```
 
 ### 3. Cài đặt thư viện
@@ -59,17 +59,19 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Hướng dẫn sử dụng
+## 🚀 Hướng dẫn cách mở game
 Khởi chạy Game
-Để bắt đầu trò chơi:
-```bash
-python main.py
-```
+
+   Để bắt đầu trò chơi:
+   ```bash
+   python main.py
+   ```
 Huấn luyện AI (Training)
-Nếu bạn muốn huấn luyện lại mô hình từ đầu: 
-```bash
-python game/rl/train_dqn.py
-```
+
+   Nếu bạn muốn huấn luyện lại mô hình từ đầu: 
+   ```bash
+   python game/rl/train_dqn.py
+   ```
 
 ---
 
