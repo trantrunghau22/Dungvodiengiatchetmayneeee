@@ -60,13 +60,13 @@ pip install -r requirements.txt
 ---
 
 ## 🚀 Hướng dẫn cách mở game
-###Khởi chạy Game
+### Khởi chạy Game
 
    Để bắt đầu trò chơi:
    ```bash
    python main.py
    ```
-###Huấn luyện AI (Training)
+### Huấn luyện AI (Training)
 
    Nếu bạn muốn huấn luyện lại mô hình từ đầu: 
    ```bash
