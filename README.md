@@ -8,8 +8,6 @@
 
 Dự án này tái hiện trò chơi 2048 nổi tiếng với giao diện đồ họa Shinchan và tích hợp **AI Agent** sử dụng mô hình **CNNs (Convolutional Neural Networks)** kết hợp **Deep Q-Learning** để tự động chinh phục trò chơi.
 
-<img width="1867" height="1347" alt="image" src="https://github.com/user-attachments/assets/1ef6c25d-9894-42ec-98a2-603150b46a77" />
-
 ---
 
 ## 🎮 Giao diện
