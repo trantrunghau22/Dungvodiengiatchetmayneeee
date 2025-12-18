@@ -1,18 +1,19 @@
-﻿import pygame
+import pygame
 import os
 import random
 import numpy as np
 from game.rl.agent_dqn import DQNAgent
 from game.settings import *
-from game.core.rs import load_number_sprites, load_feature_sprites, draw_popup_bg, draw_styled_btn, SettingsHelper
+from game.core.rs import load_number_sprites, load_feature_sprites, draw_popup_bg, draw_blinkbtn, SettingsHelper
 
 class BoardScene:
-    def __init__(self, app, env):
+    def __init__(self, app, env, ai_mode=False):
         self.app = app
         self.screen = app.screen
         self.env = env
+        self.ai_mode = ai_mode #nhận mode từ intro
         
-        #Assets
+        # Assets
         self.sprites = load_number_sprites(IMG_DIR, (TILE_SIZE, TILE_SIZE))
         self.load_lang_assets()
         
@@ -23,65 +24,77 @@ class BoardScene:
                 return pygame.transform.smoothscale(img, size)
             return None
 
-        self.img_exit = load_popup_img('popup_exit.png', (100, 100))
-        self.img_win  = load_popup_img('popup_win.png', (120, 100))
-        self.img_lose = load_popup_img('popup_lose.png', (120, 100))
+        self.img_exit = load_popup_img('popup_exit.png', (150, 150))
+        self.img_win  = load_popup_img('popup_win.png', (170, 150))
+        self.img_lose = load_popup_img('popup_lose.png', (170, 150))
 
-        #Fonts
+        # Fonts
         if os.path.exists(SHIN_FONT_PATH):
             self.font = pygame.font.Font(SHIN_FONT_PATH, 35)
             self.score_font = pygame.font.Font(SHIN_FONT_PATH, SCORESIZE)
-            self.popup_font = pygame.font.Font(SHIN_FONT_PATH, 24)
+            self.popup_font = pygame.font.Font(SHIN_FONT_PATH, 24) 
             self.small_font = pygame.font.Font(SHIN_FONT_PATH, 20)
         else:
-            self.font = pygame.font.SysFont('arial', 35, bold=True)
-            self.score_font = pygame.font.SysFont('arial', SCORESIZE, bold=True)
-            self.popup_font = pygame.font.SysFont('arial', 24)
-            self.small_font = pygame.font.SysFont('arial', 20)
+            try:
+                self.font = pygame.font.SysFont('tahoma', 35, bold=True)
+                self.score_font = pygame.font.SysFont('tahoma', SCORESIZE, bold=True)
+                self.popup_font = pygame.font.SysFont('tahoma', 24)
+                self.small_font = pygame.font.SysFont('tahoma', 20)
+            except:
+                self.font = pygame.font.SysFont('arial', 35, bold=True)
+                self.score_font = pygame.font.SysFont('arial', SCORESIZE, bold=True)
+                self.popup_font = pygame.font.SysFont('arial', 24)
+                self.small_font = pygame.font.SysFont('arial', 20)
         
-        #Buttons
+        # Buttons
         btn_width = 100; btn_height = 165 
         btn_y = WHEIGHT - btn_height - 30 
-        self.btn_reset = pygame.Rect(50, btn_y + 30, btn_width, btn_height)
+        self.btn_reset = pygame.Rect(50, btn_y, btn_width, btn_height)
         self.btn_menu = pygame.Rect(WWIDTH - 150, btn_y, btn_width, btn_height)
         self.btn_save = pygame.Rect(WWIDTH - 270, btn_y, btn_width, btn_height)
         self.btn_setting = pygame.Rect(WWIDTH - 160, btn_y - 100, btn_width, btn_height)
-        self.btn_ai = pygame.Rect(WWIDTH - 260, 180, 200, 80)
+        
+        #Nút x cho các popup 
+        cx, cy = WWIDTH // 2, WHEIGHT // 2
+        self.btn_close = pygame.Rect(cx - 200 + 10, cy - 150 + 10, 30, 30)
 
         self.popup_mode = None 
         self.input_text = ""; self.overwrite_target = ""; self.best_shown = False 
         
         self.settings_helper = SettingsHelper(app)
-        # --- THÊM ĐOẠN SETUP AI NÀY ---
-        self.ai_agent = None
-        try:
-            # Khởi tạo Agent
-            self.ai_agent = DQNAgent(device='cpu') # Chạy trên máy tính thì dùng CPU cho tiện
-            
-            # Đường dẫn đến file model bạn vừa tải về
-            # Ví dụ bạn để file best_model.pth ngay cạnh main.py thì chỉ cần tên file
-            # model_path = "backup_ep_1000.pth" 
-            
-            # Nếu bạn để trong thư mục checkpoints thì:
-            model_path = os.path.join("checkpoints", "best_model (2).pth")
-
-            if os.path.exists(model_path):
-                self.ai_agent.load(model_path)
-                self.ai_agent.epsilon = 0  # Quan trọng: Tắt chế độ học ngẫu nhiên, chỉ dùng trí khôn
-                print("AI Loaded successfully!")
-                if hasattr(self.ai_agent, 'epsilon'):
-                    self.ai_agent.epsilon = 0.0
-            else:
-                print(f"Không tìm thấy file model tại: {model_path}")
-                self.ai_agent = None
-        except Exception as e:
-            print(f"Lỗi khi load AI: {e}")
-            self.ai_agent = None
         
-        # Biến đếm thời gian để AI không đi quá nhanh (nháy mắt là xong game)
-        self.ai_timer = 0
-        self.ai_delay = 150 # AI sẽ đi mỗi 150ms (0.15 giây)
-        # ------------------------------
+        #CHỖ NÀY ĐỂ IMPORT AI NÈ NHA
+        if self.ai_mode:
+            # --- THÊM ĐOẠN SETUP AI NÀY ---
+            self.ai_agent = None
+            try:
+                # Khởi tạo Agent
+                self.ai_agent = DQNAgent(device='cpu') # Chạy trên máy tính thì dùng CPU cho tiện
+                
+                # Đường dẫn đến file model bạn vừa tải về
+                # Ví dụ bạn để file best_model.pth ngay cạnh main.py thì chỉ cần tên file
+                # model_path = "backup_ep_1000.pth" 
+                
+                # Nếu bạn để trong thư mục checkpoints thì:
+                model_path = os.path.join("checkpoints", "best_model (2).pth")
+
+                if os.path.exists(model_path):
+                    self.ai_agent.load(model_path)
+                    self.ai_agent.epsilon = 0  # Quan trọng: Tắt chế độ học ngẫu nhiên, chỉ dùng trí khôn
+                    print("AI Loaded successfully!")
+                    if hasattr(self.ai_agent, 'epsilon'):
+                        self.ai_agent.epsilon = 0.0
+                else:
+                    print(f"Không tìm thấy file model tại: {model_path}")
+                    self.ai_agent = None
+            except Exception as e:
+                print(f"Lỗi khi load AI: {e}")
+                self.ai_agent = None
+            
+            # Biến đếm thời gian để AI không đi quá nhanh (nháy mắt là xong game)
+            self.ai_timer = 0
+            self.ai_delay = 150 # AI sẽ đi mỗi 150ms (0.15 giây)
+            # ------------------------------
 
     def load_lang_assets(self):
         if self.app.lang == 'EN':
@@ -95,7 +108,7 @@ class BoardScene:
             self.bg = pygame.image.load(bg_path).convert()
             self.bg = pygame.transform.scale(self.bg, (WWIDTH, WHEIGHT))
         else:
-            self.bg = pygame.Surface((WWIDTH, WHEIGHT)); self.bg.fill(COLOR_BG_CREAM)
+            self.bg = pygame.Surface((WWIDTH, WHEIGHT)); self.bg.fill(colorBG)
 
         feat_path = os.path.join(IMG_DIR, feat_file)
         if not os.path.exists(feat_path): feat_path = os.path.join(IMG_DIR, 'features.png')
@@ -109,16 +122,14 @@ class BoardScene:
         else: self.img_setting_icon = None
 
     def update(self, dt): 
-        # Cập nhật điểm kỷ lục
         if self.env.score > self.env.top_score: self.env.top_score = self.env.score
-        
         if self.env.game_over and self.popup_mode is None:
             if self.env.score >= self.env.top_score and self.env.score > 0 and not self.best_shown:
                 self.popup_mode = 'NEW_BEST'; self.env.save_bestscore(); self.best_shown = True
             elif not self.best_shown: self.popup_mode = 'GAME_OVER'
-
-        # --- LOGIC AI VÔ ĐỊCH ---
-        if self.app.ai_mode and not self.env.game_over and not self.popup_mode:
+            
+        #CHO AI
+        if self.ai_mode and not self.env.game_over and not self.popup_mode:
             if self.ai_agent:
                 self.ai_timer += dt
                 if self.ai_timer >= self.ai_delay:
@@ -179,10 +190,9 @@ class BoardScene:
                             # Bị chặn -> Undo
                             self.env.board = backup_board.copy()
                             
-                    # 6. [CHỐNG ĐỨNG HÌNH] CHẾ ĐỘ CẢM TỬ
+                    # 6. [CHỐNG ĐỨNG HÌNH
                     # Nếu tất cả hướng an toàn đều bị chặn -> Bắt buộc đi để kết thúc game hoặc tìm vận may
                     if not action_taken:
-                        print("Không còn đường lùi! Kích hoạt chế độ Cảm Tử.")
                         for action in sorted_actions:
                             self.env.board = backup_board.copy()
                             self.env.score = backup_score
@@ -193,30 +203,48 @@ class BoardScene:
                                 self.app.play_sfx('slide')
                                 if done: self.app.play_sfx('lose')
                                 break
+
     def handle_event(self, event):
         if self.popup_mode: self.handle_popup_event(event); return
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.btn_reset.collidepoint(event.pos):
                 self.app.play_sfx('click'); self.env.reset(); self.app.play_sfx('start'); self.best_shown = False
+            
             elif self.btn_save.collidepoint(event.pos):
-                self.app.play_sfx('click'); self.popup_mode = 'SAVE'; self.input_text = ""
+                self.app.play_sfx('click')
+                #Check xem đang chơi file nào
+                if self.env.current_filename:
+                    #Có file rồi thì lưu đè luôn
+                    self.env.save_game(self.env.current_filename, mode="AI" if self.ai_mode else "Normal")
+                    #Hiện thông báo lưu thành công
+                    self.popup_mode = 'SUCCESS'
+                else:
+                    #Chưa có file thì hỏi để nhập
+                    self.popup_mode = 'SAVE'; self.input_text = ""
+            
             elif self.btn_menu.collidepoint(event.pos):
-                self.app.play_sfx('click'); self.popup_mode = 'EXIT' 
+                self.app.play_sfx('click')
+                #File save rồi thì thoát luôn
+                if self.env.current_filename:
+                    from game.scenes.intro import IntroScreen; self.app.active_scene = IntroScreen(self.app)
+                else:
+                    self.popup_mode = 'EXIT' 
+            
             elif self.btn_setting.collidepoint(event.pos):
                 self.app.play_sfx('click'); self.popup_mode = 'SETTING'
-            elif self.btn_ai.collidepoint(event.pos):
-                self.app.play_sfx('click')
-                self.app.ai_mode = not self.app.ai_mode
         
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE: self.popup_mode = 'EXIT'
-            if not self.app.ai_mode:
+            
+            #Này sự kiện nút của người chơi chơi nếu không phải ai mode
+            if not self.ai_mode:
                 action = None
                 if event.key in [pygame.K_UP, pygame.K_w]: action = 0
                 elif event.key in [pygame.K_DOWN, pygame.K_s]: action = 1
                 elif event.key in [pygame.K_LEFT, pygame.K_a]: action = 2
                 elif event.key in [pygame.K_RIGHT, pygame.K_d]: action = 3
+                
                 if action is not None and not self.env.game_over:
                     max_before = np.max(self.env.board) if self.env.board.size > 0 else 0
                     board, current_score, done, moved = self.env.step(action)
@@ -228,7 +256,18 @@ class BoardScene:
 
     def handle_popup_event(self, event):
         cx, cy = WWIDTH // 2, WHEIGHT // 2
-        
+        btn_close_rect = pygame.Rect(cx - 240, cy - 215, 30, 30)
+        #Nút x tiếp
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.btn_close.collidepoint(event.pos):
+                self.popup_mode = None; return
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.popup_mode != 'SETTING':
+                if btn_close_rect.collidepoint(event.pos):
+                    self.app.play_sfx('click')
+                    self.popup_mode = None; return
+
         if self.popup_mode == 'SETTING':
             res = self.settings_helper.handle_event(event, cx, cy)
             if res == 'CLOSE': self.popup_mode = None
@@ -245,40 +284,44 @@ class BoardScene:
                     files = self.env.get_saved_files()
                     if filename in files: self.overwrite_target = self.input_text; self.popup_mode = 'OVERWRITE'
                     elif len(files) >= 5: self.popup_mode = 'MAX_FILES'
-                    else: self.env.save_game(self.input_text, mode="AI" if self.app.ai_mode else "Normal"); self.popup_mode = None
+                    else: self.env.save_game(self.input_text, mode="AI" if self.ai_mode else "Normal"); self.popup_mode = 'SUCCESS'
                 elif event.key == pygame.K_BACKSPACE: self.input_text = self.input_text[:-1]
                 elif event.key == pygame.K_ESCAPE: self.popup_mode = None
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if not pygame.Rect(cx - 200, cy - 150, 400, 300).collidepoint(event.pos): self.popup_mode = None
+                if not pygame.Rect(cx - 250, cy - 255, 500, 450).collidepoint(event.pos): self.popup_mode = None
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.popup_mode == 'OVERWRITE':
-                if pygame.Rect(cx - 80, cy + 50, 100, 40).collidepoint(event.pos): 
-                    self.env.save_game(self.overwrite_target, mode="AI" if self.app.ai_mode else "Normal"); self.popup_mode = None
-                elif pygame.Rect(cx + 20, cy + 50, 100, 40).collidepoint(event.pos): self.popup_mode = 'SAVE'
+                if pygame.Rect(cx - 110, cy + 60, 100, 40).collidepoint(event.pos): 
+                    self.env.save_game(self.overwrite_target, mode="AI" if self.ai_mode else "Normal"); self.popup_mode = 'SUCCESS'
+                elif pygame.Rect(cx + 40, cy + 50, 100, 40).collidepoint(event.pos): 
+                    #Nếu không muốn ghi đè thì cho nhập tên khác
+                    self.popup_mode = 'SAVE'
 
             elif self.popup_mode == 'EXIT':
-                if pygame.Rect(cx - 130, cy + 60, 120, 40).collidepoint(event.pos): 
+                if pygame.Rect(cx - 140, cy + 80, 130, 40).collidepoint(event.pos): #Quit
                     from game.scenes.intro import IntroScreen; self.app.active_scene = IntroScreen(self.app)
-                elif pygame.Rect(cx + 10, cy + 60, 120, 40).collidepoint(event.pos): self.popup_mode = 'SAVE'
+                elif pygame.Rect(cx + 10, cy + 80, 130, 40).collidepoint(event.pos): #Save&Quit
+                    #CHo nhập để lưu
+                    self.popup_mode = 'SAVE'; self.input_text = ""
 
-            elif self.popup_mode == 'MAX_FILES': self.popup_mode = 'SAVE' 
+            elif self.popup_mode == 'MAX_FILES': self.popup_mode = 'SAVE'
+            
+            elif self.popup_mode == 'SUCCESS': self.popup_mode = None
 
             elif self.popup_mode in ['NEW_BEST', 'GAME_OVER']:
-                if pygame.Rect(cx - 60, cy + 80, 120, 40).collidepoint(event.pos):
+                if pygame.Rect(cx - 60, cy + 100, 120, 40).collidepoint(event.pos):
                     if self.popup_mode == 'NEW_BEST' and not self.env.game_over: self.popup_mode = None 
                     else: from game.scenes.intro import IntroScreen; self.app.active_scene = IntroScreen(self.app)
 
     def render(self):
         self.screen.blit(self.bg, (0, 0))
         score_surf = self.score_font.render(str(self.env.score), True, (0,0,0))
-        self.screen.blit(score_surf, (340, 50)) 
-        best_x = WWIDTH - 250 
+        self.screen.blit(score_surf, (340, 45)) 
+        best_x = WWIDTH - 265 
         best_surf = self.score_font.render(str(self.env.top_score), True, (0,0,0))
-        self.screen.blit(best_surf, (best_x, 50)) 
-        ai_color = (100, 255, 100) if self.app.ai_mode else (200, 200, 200)
-        draw_styled_btn(self.screen, self.btn_ai, TEXTS[self.app.lang]['ai_btn'], self.small_font, ai_color)
-
+        self.screen.blit(best_surf, (best_x, 45)) 
+        
         for r in range(TVSIZE):
             for c in range(TVSIZE):
                 val = self.env.board[r][c]
@@ -320,50 +363,61 @@ class BoardScene:
             self.settings_helper.draw(self.screen, cx, cy, self.popup_font, self.font)
             return
 
-        box_rect = pygame.Rect(cx - 200, cy - 150, 400, 300)
+        #Vẽ nền chung
+        box_rect = pygame.Rect(cx - 250, cy - 225, 500, 450)
         draw_popup_bg(self.screen, box_rect)
+        
+        #Nút Close
+        btn_close = pygame.Rect(cx - 240, cy - 215, 30, 30)
+        pygame.draw.rect(self.screen, (200, 50, 50), btn_close, border_radius=5)
+        pygame.draw.rect(self.screen, TXTdarkcolor, btn_close, 2, border_radius=5)
+        self.screen.blit(self.font.render("X", True, (255,255,255)), btn_close.move(5, -2))
 
         if self.popup_mode == 'SAVE':
-            self.draw_text_centered(txt['save_game_title'], -100, size=30, color=COLOR_TEXT_DARK)
-            self.draw_text_centered(txt['enter_name'], -50, size=20, color=COLOR_TEXT_DARK)
-            input_rect = pygame.Rect(cx - 100, cy - 10, 200, 40)
+            # [CHỈNH] Dời text lên chút
+            self.draw_text_centered(txt['save_game_title'], -120, size=30, color=TXTdarkcolor)
+            self.draw_text_centered(txt['enter_name'], -70, size=20, color=TXTdarkcolor)
+            # [CHỈNH] Input box ở giữa
+            input_rect = pygame.Rect(cx - 100, cy - 20, 200, 40)
             pygame.draw.rect(self.screen, (255,255,255), input_rect, border_radius=5)
             pygame.draw.rect(self.screen, COLOR_ACCENT_BLUE, input_rect, 2, border_radius=5)
-            txt_surf = self.popup_font.render(self.input_text, True, COLOR_TEXT_DARK)
+            txt_surf = self.popup_font.render(self.input_text, True, TXTdarkcolor)
             self.screen.blit(txt_surf, (input_rect.x+10, input_rect.y+5))
 
         elif self.popup_mode == 'OVERWRITE':
             self.draw_text_centered(txt['file_exists'], -60, color=COLOR_ACCENT_RED)
-            self.draw_text_centered(txt['overwrite_ask'], -10, color=COLOR_TEXT_DARK)
-            draw_styled_btn(self.screen, pygame.Rect(cx - 80, cy + 50, 100, 40), txt['yes'], self.popup_font, COLOR_ACCENT_BLUE)
-            draw_styled_btn(self.screen, pygame.Rect(cx + 20, cy + 50, 100, 40), txt['no'], self.popup_font, COLOR_ACCENT_RED)
+            self.draw_text_centered(txt['overwrite_ask'], -10, color=TXTdarkcolor)
+            draw_blinkbtn(self.screen, pygame.Rect(cx - 110, cy + 60, 100, 40), txt['yes'], self.popup_font, COLOR_ACCENT_BLUE)
+            draw_blinkbtn(self.screen, pygame.Rect(cx + 10, cy + 60, 100, 40), txt['no'], self.popup_font, COLOR_ACCENT_RED)
 
         elif self.popup_mode == 'EXIT':
-            img_rect = pygame.Rect(cx - 50, cy - 110, 100, 100) 
+            img_rect = pygame.Rect(cx - 75, cy - 160, 150, 150) 
             if self.img_exit: self.screen.blit(self.img_exit, img_rect)
-            self.draw_text_centered(txt['exit_msg'], 20, color=COLOR_TEXT_DARK)
-            draw_styled_btn(self.screen, pygame.Rect(cx - 130, cy + 60, 120, 40), txt['btn_quit_now'], self.popup_font, COLOR_ACCENT_RED)
-            draw_styled_btn(self.screen, pygame.Rect(cx + 10, cy + 60, 120, 40), txt['btn_save_quit'], self.popup_font, COLOR_ACCENT_BLUE)
+            self.draw_text_centered(txt['exit_msg'], 30, color=TXTdarkcolor)
+            draw_blinkbtn(self.screen, pygame.Rect(cx - 140, cy + 80, 130, 40), txt['btn_quit_now'], self.popup_font, COLOR_ACCENT_RED)
+            draw_blinkbtn(self.screen, pygame.Rect(cx + 10, cy + 80, 130, 40), txt['btn_save_quit'], self.popup_font, COLOR_ACCENT_BLUE)
 
         elif self.popup_mode == 'NEW_BEST':
-            img_rect = pygame.Rect(cx - 60, cy - 130, 120, 100)
+            img_rect = pygame.Rect(cx - 85, cy - 180, 170, 150)
             if self.img_win: self.screen.blit(self.img_win, img_rect)
-            self.draw_text_centered(txt['new_best_title'], -10, size=35, color=COLOR_ACCENT_RED)
-            self.draw_text_centered(f"{self.env.score}", 30, size=40, color=COLOR_TEXT_DARK)
-            draw_styled_btn(self.screen, pygame.Rect(cx - 60, cy + 80, 120, 40), txt['btn_continue'], self.popup_font, COLOR_ACCENT_BLUE)
+            self.draw_text_centered(txt['new_best_title'], 10, size=35, color=COLOR_ACCENT_RED)
+            self.draw_text_centered(f"{self.env.score}", 50, size=40, color=TXTdarkcolor)
+            draw_blinkbtn(self.screen, pygame.Rect(cx - 60, cy + 100, 120, 40), txt['btn_continue'], self.popup_font, COLOR_ACCENT_BLUE)
 
         elif self.popup_mode == 'GAME_OVER':
-            img_rect = pygame.Rect(cx - 60, cy - 130, 120, 100)
+            img_rect = pygame.Rect(cx - 85, cy - 180, 170, 150)
             if self.img_lose: self.screen.blit(self.img_lose, img_rect)
-            self.draw_text_centered(txt['game_over_title'], 0, size=35, color=COLOR_ACCENT_RED)
-            draw_styled_btn(self.screen, pygame.Rect(cx - 60, cy + 80, 120, 40), txt['btn_menu'], self.popup_font, COLOR_ACCENT_BLUE)
+            self.draw_text_centered(txt['game_over_title'], 10, size=35, color=COLOR_ACCENT_RED)
+            draw_blinkbtn(self.screen, pygame.Rect(cx - 60, cy + 100, 120, 40), txt['btn_menu'], self.popup_font, COLOR_ACCENT_BLUE)
 
         elif self.popup_mode == 'MAX_FILES':
             self.draw_text_centered(txt['max_files'], 0, color=COLOR_ACCENT_RED)
+            
+        elif self.popup_mode == 'SUCCESS':
+            self.draw_text_centered(txt['saved_success'], 0, color=COLOR_ACCENT_BLUE)
 
     def draw_text_centered(self, text, y_off, size=24, color=(0,0,0)):
-        if os.path.exists(SHIN_FONT_PATH): font = pygame.font.Font(SHIN_FONT_PATH, size)
-        else: font = pygame.font.SysFont('arial', size)
+        font = self.popup_font
         surf = font.render(text, True, color)
         self.screen.blit(surf, surf.get_rect(center=(WWIDTH//2, WHEIGHT//2 + y_off)))
 

@@ -1,4 +1,4 @@
-﻿import pygame
+import pygame
 import os
 from game.settings import * 
 #import hết luôn
