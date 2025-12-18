@@ -80,7 +80,7 @@ class BoardScene:
         
         # Biến đếm thời gian để AI không đi quá nhanh (nháy mắt là xong game)
         self.ai_timer = 0
-        self.ai_delay = 100 # AI sẽ đi mỗi 100ms (0.1 giây)
+        self.ai_delay = 150 # AI sẽ đi mỗi 150ms (0.15 giây)
         # ------------------------------
 
     def load_lang_assets(self):
