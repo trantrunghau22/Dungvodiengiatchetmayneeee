@@ -48,15 +48,16 @@ def draw_popup_bg(screen, rect):
     shadow_rect.move_ip(5, 5)
     pygame.draw.rect(screen, (50, 50, 50), shadow_rect, border_radius=15)
     pygame.draw.rect(screen, POPUP_BG_COLOR, rect, border_radius=15)
-    pygame.draw.rect(screen, COLOR_TEXT_DARK, rect, 4, border_radius=15)
+    pygame.draw.rect(screen, TXTdarkcolor, rect, 4, border_radius=15)
 
-def draw_styled_btn(screen, rect, text, font, color=COLOR_ACCENT_BLUE):
+def draw_blinkbtn(screen, rect, text, font, color=COLOR_ACCENT_BLUE):
     """Vẽ nút bấm có bóng đổ và viền"""
     shadow = rect.copy()
     shadow.move_ip(3, 3)
     pygame.draw.rect(screen, (50, 50, 50), shadow, border_radius=8)
     pygame.draw.rect(screen, color, rect, border_radius=8)
-    pygame.draw.rect(screen, COLOR_TEXT_DARK, rect, 2, border_radius=8)
+    pygame.draw.rect(screen, TXTdarkcolor, rect, 2, border_radius=8)
+    
     if text:
         surf = font.render(text, True, (255, 255, 255))
         screen.blit(surf, surf.get_rect(center=rect.center))
@@ -69,77 +70,82 @@ class SettingsHelper:
         self.dragging_sfx = False
 
     def handle_event(self, event, cx, cy):
-        lang_rect = pygame.Rect(cx + 20, cy - 80, 120, 30)
-        music_rect = pygame.Rect(cx + 20, cy - 20, 200, 20)
+        close_rect = pygame.Rect(cx - 240, cy - 215, 30, 30)
+        lang_rect = pygame.Rect(cx + 20, cy - 120, 120, 30)
+        music_rect = pygame.Rect(cx + 20, cy - 40, 200, 20)
         sfx_rect   = pygame.Rect(cx + 20, cy + 40, 200, 20)
-        back_rect  = pygame.Rect(cx - 60, cy + 120, 120, 40)
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if lang_rect.collidepoint(event.pos):
+            if close_rect.collidepoint(event.pos):
+                self.app.play_sfx('click')
+                return 'CLOSE'
+            elif lang_rect.collidepoint(event.pos):
                 self.app.lang = 'EN' if self.app.lang == 'VI' else 'VI'
                 self.app.play_sfx('click')
                 return 'LANG_CHANGED'
             elif music_rect.collidepoint(event.pos):
                 self.dragging_music = True
-                self._update_music(event.pos[0], music_rect)
+                self.upmusic(event.pos[0], music_rect)
             elif sfx_rect.collidepoint(event.pos):
                 self.dragging_sfx = True
-                self._update_sfx(event.pos[0], sfx_rect)
-            elif back_rect.collidepoint(event.pos):
-                self.app.play_sfx('click')
-                return 'CLOSE'
+                self.upsfx(event.pos[0], sfx_rect)
         
         elif event.type == pygame.MOUSEBUTTONUP:
             self.dragging_music = False
             self.dragging_sfx = False
             
         elif event.type == pygame.MOUSEMOTION:
-            if self.dragging_music: self._update_music(event.pos[0], music_rect)
-            elif self.dragging_sfx: self._update_sfx(event.pos[0], sfx_rect)
+            if self.dragging_music: self.upmusic(event.pos[0], music_rect)
+            elif self.dragging_sfx: self.upsfx(event.pos[0], sfx_rect)
         
         return None
 
     def draw(self, screen, cx, cy, font, title_font):
-        box_rect = pygame.Rect(cx - 200, cy - 150, 450, 300)
+        #vẽ nền popup
+        box_rect = pygame.Rect(cx - 250, cy - 225, 500, 450)
         draw_popup_bg(screen, box_rect)
+        #vẽ x bên trái
+        close_rect = pygame.Rect(cx - 240, cy - 215, 30, 30)
+        pygame.draw.rect(screen, (200, 50, 50), close_rect, border_radius=5) # Màu đỏ
+        pygame.draw.rect(screen, TXTdarkcolor, close_rect, 2, border_radius=5) # Viền đen
+        #Vẽ x vào giữa nút
+        x_surf = font.render("X", True, (255,255,255))
+        screen.blit(x_surf, x_surf.get_rect(center=close_rect.center))
+
         txt = TEXTS[self.app.lang]
         
         #Tiêu đề
-        title = title_font.render(txt['setting'], True, COLOR_TEXT_DARK)
-        screen.blit(title, title.get_rect(center=(cx + 25, cy - 120)))
+        title = title_font.render(txt['setting'], True, TXTdarkcolor)
+        screen.blit(title, title.get_rect(center=(cx, cy - 180)))
 
         #Ngôn ngữ
-        screen.blit(font.render(txt['lang_label'], True, COLOR_TEXT_DARK), (cx - 150, cy - 80))
-        lang_rect = pygame.Rect(cx + 20, cy - 80, 120, 30)
-        draw_styled_btn(screen, lang_rect, self.app.lang, font, (100, 200, 100))
+        screen.blit(font.render(txt['lang_label'], True, TXTdarkcolor), (cx - 150, cy - 80))
+        lang_rect = pygame.Rect(cx + 20, cy - 120, 120, 30)
+        draw_blinkbtn(screen, lang_rect, self.app.lang, font, (100, 200, 100))
 
         #Music Slider
         vol_m = pygame.mixer.music.get_volume()
-        screen.blit(font.render(txt['music_label'], True, COLOR_TEXT_DARK), (cx - 150, cy - 20))
-        music_rect = pygame.Rect(cx + 20, cy - 20, 200, 20)
-        self._draw_slider(screen, music_rect, vol_m)
+        screen.blit(font.render(txt['music_label'], True, TXTdarkcolor), (cx - 150, cy - 20))
+        music_rect = pygame.Rect(cx + 20, cy - 40, 200, 20)
+        self.drawslider(screen, music_rect, vol_m)
 
         #SFX Slider
         vol_s = getattr(self.app, 'sfx_volume', 0.5)
-        screen.blit(font.render(txt['sfx_label'], True, COLOR_TEXT_DARK), (cx - 150, cy + 40))
+        screen.blit(font.render(txt['sfx_label'], True, TXTdarkcolor), (cx - 150, cy + 40))
         sfx_rect = pygame.Rect(cx + 20, cy + 40, 200, 20)
-        self._draw_slider(screen, sfx_rect, vol_s)
+        self.drawslider(screen, sfx_rect, vol_s)
 
-        #Về
-        back_rect = pygame.Rect(cx - 33, cy + 120, 120, 40)
-        draw_styled_btn(screen, back_rect, txt['btn_back'], font, COLOR_ACCENT_RED)
-
-    def _draw_slider(self, screen, rect, value):
+    def drawslider(self, screen, rect, value):
         pygame.draw.rect(screen, (200,200,200), rect, border_radius=10)
         pygame.draw.rect(screen, COLOR_ACCENT_BLUE, (rect.x, rect.y, rect.width * value, rect.height), border_radius=10)
-        pygame.draw.circle(screen, COLOR_TEXT_DARK, (int(rect.x + rect.width * value), rect.centery), 12)
+        pygame.draw.circle(screen, TXTdarkcolor, (int(rect.x + rect.width * value), rect.centery), 12)
 
-    def _update_music(self, mouse_x, rect):
+    def upmusic(self, mouse_x, rect):
         ratio = (mouse_x - rect.x) / rect.width
         val = max(0.0, min(1.0, ratio))
         pygame.mixer.music.set_volume(val)
 
-    def _update_sfx(self, mouse_x, rect):
+    def upsfx(self, mouse_x, rect):
         ratio = (mouse_x - rect.x) / rect.width
         val = max(0.0, min(1.0, ratio))
         self.app.sfx_volume = val

@@ -16,8 +16,8 @@ WHEIGHT = info.current_h
 FPS = 60
 
 #CONCEPT
-COLOR_BG_CREAM = (250, 248, 239)
-COLOR_TEXT_DARK = (60, 50, 50)
+colorBG = (250, 248, 239)
+TXTdarkcolor = (60, 50, 50)
 COLOR_ACCENT_RED = (200, 60, 60)
 COLOR_ACCENT_BLUE = (60, 100, 200)
 
@@ -58,7 +58,7 @@ TEXTS = {
         'start_err': 'Nhập đi rồi chơi má ơi!',
         'score': 'Điểm', 'best': 'Đỉnh nhất',
         'ask_save': 'Muốn lưu game thiệt hông?', 'ask_quit': 'Bộ muốn thoát thiệt à?',
-        'yes': 'Ok nhuôn', 'no': 'Thôi khỏi đi',
+        'yes': 'Ok nhuôn', 'no': 'Khỏi!',
         
         'save_game_title': 'LƯU GAME',
         'enter_name': 'Nhập tên file (Max 5 file):',
@@ -80,17 +80,18 @@ TEXTS = {
         'saved_success': 'Đã lưu nha!',
         'delete_confirm': 'Xóa file này nha?',
         'rename_title': 'Đổi tên:',
-        'file_not_found': 'Không thấy file đâu á!',
+        'file_not_found': 'Không thấy file mắ ơi!',
         'delete': 'Xóa', 'rename': 'Đổi tên',
 
         'hello' : 'XIN CHÀO',
 
-        'ai_btn': 'CHƠI AI',
+        'choose_mode': 'CHỌN CHẾ ĐỘ',
+        'mode_player': 'NGƯỜI CHƠI',
+        'mode_ai': 'AI TỰ CHƠI',
 
         'lang_label': 'Ngôn ngữ:',
         'music_label': 'Nhạc nền:',
         'sfx_label': 'Hiệu ứng:',
-        'btn_back': 'QUAY LẠI',
         'on': 'BẬT', 'off': 'TẮT',
 
         'tut_title': 'HƯỚNG DẪN',
@@ -98,22 +99,25 @@ TEXTS = {
             "Cách chơi 2048 của thợ điện:",
             "- Dùng phím Mũi tên hoặc WASD để di chuyển.",
             "- Hai ô cùng số sẽ gộp lại thành số lớn hơn.",
-            "- Ớt chuông có cơ chế gộp đặc biệt. Sau khi bạn chơi được đến ô 128, có",
-            "khả năng sẽ xuất hiện ô ớt chuông, các ô ớt chuông không thể gộp với nhau",
-            "nhưng có thể gộp với ô 256 rồi cả hai biến mất. Bạn sẽ có điểm thưởng.",
-            "- Mục tiêu: Đạt điểm càng cao càng tốt! Càng nhiều ô trống càng ngon!"
+            "- Ớt chuông có cơ chế gộp đặc biệt. Sau khi bạn chơi được",
+            "đến ô 128, có khả năng sẽ xuất hiện ô ớt chuông, các ô ớt", 
+            "chuông không thể gộp với nhau nhưng có thể gộp với ô 256", 
+            "rồi cả hai biến mất. Bạn sẽ có điểm thưởng.",
+            "- Mục tiêu: Điểm càng cao càng ngon lành!",
+            "- Chúc may mắn và chơi thật vui nha!"
         ],
         'credit_title': 'ĐỘI NGŨ THỰC HIỆN',
         'credit_content': [
-            "Đồ án Nhập môn CNTT",
             "Nhóm: Thợ Điện Viết Code",
             "---",
-            "Đào Khánh Băng",
-            "Vũ Gia Bảo",
-            "Trần Trung Hậu",
-            "Ngô Bảo",
-            "Phạm Trần Đăng Duy",
-            "Phạm Tường An"
+            "Đào Khánh Băng - 25120162",
+            "Vũ Gia Bảo - 25120168",
+            "Trần Trung Hậu - 25120188",
+            "Ngô Bảo - 25120165",
+            "Phạm Trần Đăng Duy - 25120138",
+            "Phạm Hoàng Tường An - 25120159",
+            "Giáo viên hướng dẫn: Lê Đức Khoan",
+            "12/2025"
         ]
     },
     'EN': {
@@ -150,14 +154,14 @@ TEXTS = {
         'delete': 'Delete', 'rename': 'Rename',
 
         'hello' : 'HELLO',
-
-        'ai_btn': 'CHƠI AI',
+        'choose_mode': 'CHOOSE MODE',
+        'mode_player': 'PLAYER',
+        'mode_ai': 'AI AUTO',
 
 
         'lang_label': 'Language:',
         'music_label': 'Music:',
         'sfx_label': 'SFX:',
-        'btn_back': 'BACK',
         'on': 'ON', 'off': 'OFF',
 
         'tut_title': 'TUTORIAL',
@@ -165,23 +169,26 @@ TEXTS = {
             "How to play 2048:",
             "- Use the arrow keys or WASD to move.",
             "- Two tiles with the same number will merge into a larger one.",
-            "- Bell peppers have a special merging mechanic. After you reach the 128 tile, ", 
-            "there is a chance that a bell pepper tile will appear. Bell pepper tiles cannot",
-            "merge with each other, but they can merge with a 256 tile, after which both",
-            "tiles disappear and you receive a bonus score."
-            "- Goal: Get the highest score possible! The more empty tiles, the better!"
+            "- Bell peppers have a special merging mechanic. After you",
+            "reach the 128 tile, there is a chance that a bell pepper tile",
+            "will appear. Bell pepper tiles cannot merge with each other, ",
+            "but they can merge with a 256 tile, after which both tiles",
+            "disappear and you receive a bonus score.",
+            "- Goal: Get the highest score possible!",
+            "- Good luck and have fun!"
         ],
         'credit_title': 'CREDITS',
         'credit_content': [
-            "Intro to IT Project",
             "Team: Electrician Coders",
             "---",
-            "Dao Khanh Bang",
-            "Vu Gia Bao",
-            "Tran Trung Hau",
-            "Ngo Bao",
-            "Pham Tran Dang Duy",
-            "Pham Tuong An"
+            "Dao Khanh Bang - 25120162",
+            "Vu Gia Bao - 25120168",
+            "Tran Trung Hau - 25120188",
+            "Ngo Bao - 25120165",
+            "Pham Tran Dang Duy - 25120138",
+            "Pham Hoang Tuong An - 25120159",
+            "Speacial thanks to: Le Duc Khoan",
+            "12/2025"
         ]
     }
 }
