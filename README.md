@@ -3,7 +3,6 @@
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Pygame](https://img.shields.io/badge/Pygame-2.5.2-green)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.3.0-red)
-![License](https://img.shields.io/badge/License-MIT-yellow)
 
 > Đồ án môn học **Nhập môn Công nghệ Thông tin** > **Khoa Công nghệ Thông tin - Trường Đại học Khoa học Tự nhiên, ĐHQG-HCM**
 
