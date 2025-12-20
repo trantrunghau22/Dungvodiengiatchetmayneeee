@@ -124,12 +124,12 @@ class Game2048Env:
             for c in range(self.size - 1):
                 v1, v2 = self.board[r, c], self.board[r, c+1]
                 if v1 == v2 and v1 != 1: return False 
-                if (v1==1 and v2==512) or (v1==512 and v2==1): return False
+                if (v1==1 and v2==256) or (v1==256 and v2==1): return False
         for r in range(self.size - 1):
             for c in range(self.size):
                 v1, v2 = self.board[r, c], self.board[r+1, c]
                 if v1 == v2 and v1 != 1: return False
-                if (v1==1 and v2==512) or (v1==512 and v2==1): return False
+                if (v1==1 and v2==256) or (v1==256 and v2==1): return False
         return True
 
     #Cơ chế save load game
