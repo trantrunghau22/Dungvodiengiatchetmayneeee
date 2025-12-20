@@ -69,18 +69,13 @@ class BoardScene:
             self.ai_agent = None
             try:
                 # Khởi tạo Agent
-                self.ai_agent = DQNAgent(device='cpu') # Chạy trên máy tính thì dùng CPU cho tiện
+                self.ai_agent = DQNAgent(device='cpu') 
                 
-                # Đường dẫn đến file model bạn vừa tải về
-                # Ví dụ bạn để file best_model.pth ngay cạnh main.py thì chỉ cần tên file
-                # model_path = "backup_ep_1000.pth" 
-                
-                # Nếu bạn để trong thư mục checkpoints thì:
-                model_path = os.path.join("checkpoints", "best_model (2).pth")
+                model_path = os.path.join("checkpoints", "backup_colab_16000.pth")
 
                 if os.path.exists(model_path):
                     self.ai_agent.load(model_path)
-                    self.ai_agent.epsilon = 0  # Quan trọng: Tắt chế độ học ngẫu nhiên, chỉ dùng trí khôn
+                    self.ai_agent.epsilon = 0  # Tắt chế độ học ngẫu nhiên, chỉ dùng trí khôn
                     print("AI Loaded successfully!")
                     if hasattr(self.ai_agent, 'epsilon'):
                         self.ai_agent.epsilon = 0.0
@@ -91,7 +86,7 @@ class BoardScene:
                 print(f"Lỗi khi load AI: {e}")
                 self.ai_agent = None
             
-            # Biến đếm thời gian để AI không đi quá nhanh (nháy mắt là xong game)
+            # Biến đếm thời gian để AI không đi quá nhanh
             self.ai_timer = 0
             self.ai_delay = 150 # AI sẽ đi mỗi 150ms (0.15 giây)
             # ------------------------------
@@ -202,8 +197,13 @@ class BoardScene:
                             if moved:
                                 self.app.play_sfx('slide')
                                 if done: self.app.play_sfx('lose')
+                                action_taken = True # Đánh dấu là đã đi
                                 break
-
+                    # để AI không bị đứng hình khi bí
+                    if not action_taken:
+                        self.env.game_over = True
+                        self.app.play_sfx('lose')
+                        self.popup_mode = 'GAME_OVER'
     def handle_event(self, event):
         if self.popup_mode: self.handle_popup_event(event); return
 
