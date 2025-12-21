@@ -225,9 +225,9 @@ class Game2048Env:
         if not new_name.startswith("save_"): new_name = "save_" + new_name #Chuẩn hóa tên file MỚI (để tạo file đích đúng chuẩn)
         if not new_name.endswith(".json"): new_name += ".json"
         
-        if os.path.exists(new_name): return False #Kiểm tra trùng lặp: Nếu tên mới đã có file tồn tại rồi thì KHÔNG cho đổi (tránh ghi đè nhầm)
+        #if os.path.exists(new_name): return False #Kiểm tra trùng lặp: Nếu tên mới đã có file tồn tại rồi thì KHÔNG cho đổi (tránh ghi đè nhầm)
         try:
-            os.rename(old_name, new_name) #Thực hiện đổi tên file
+            os.replace(old_name, new_name) #Thực hiện đổi tên file
             #Cập nhật tên file nếu được đổi
             if self.current_filename == old_name: #Nếu file vừa bị đổi tên chính là file đang chơi hiện tại
                 self.current_filename = new_name #Cập nhật biến theo dõi thành tên mới

@@ -87,7 +87,7 @@ class IntroScreen:
             elif self.modal == 'CHOOSE_MODE':
                 self._handle_choose_mode(event)
             
-            elif event.type == pygame.KEYDOWN and self.modal == 'LOAD':
+            if event.type == pygame.KEYDOWN and self.modal == 'LOAD':
                 self._handle_rename_input(event)
             
             if event.type == pygame.TEXTINPUT and self.modal == 'LOAD' and self.rename_idx != -1:
@@ -195,9 +195,11 @@ class IntroScreen:
             if event.key == pygame.K_RETURN:
                 if self.rename_text.strip():
                     old = self.saved_files[self.rename_idx]
-                    Game2048Env().rename_game(old, self.rename_text)
-                    self.open_modal('LOAD')
-                self.rename_idx = -1
+                    if Game2048Env().rename_game(old, self.rename_text):
+                        self.open_modal('LOAD')
+                        self.rename_idx = -1
+                    else:
+                        printf("Tên file không được bỏ trống!")
             elif event.key == pygame.K_ESCAPE: self.rename_idx = -1
             elif event.key == pygame.K_BACKSPACE: self.rename_text = self.rename_text[:-1]
 
