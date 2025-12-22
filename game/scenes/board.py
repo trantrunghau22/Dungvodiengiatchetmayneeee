@@ -71,7 +71,7 @@ class BoardScene:
                 # Khởi tạo Agent
                 self.ai_agent = DQNAgent(device='cpu') 
                 
-                model_path = os.path.join("checkpoints", "backup_colab_16000.pth")
+                model_path = os.path.join("checkpoints", "best_model_god (newest-kaggle).pth")
 
                 if os.path.exists(model_path):
                     self.ai_agent.load(model_path)
